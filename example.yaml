@@ -1,0 +1,66 @@
+# Some suite description here
+---
+name: example-suite
+description: example test suite
+skip:
+  # Skip execution if database does not contain any user tables except for postgres user
+  query: |
+    select *
+    from pg_catalog.pg_tables
+    where tableowner != 'postgres'
+    limit 1
+  n_rows:
+    condition: "="
+    value: 0
+
+cases:
+  # This test case will be successfully executed
+  - name: success-case
+    query: |
+      select pid::int8
+      from pg_stat_activity
+    columns:
+      - condition: ">"
+        name: pid
+        value: 0
+      - condition: "<"
+        name: pid
+        value: 65536
+
+  # This test case will be failed, because role name never match to `username`
+  - name: failed-case
+    query: |
+      select rolname
+      from pg_roles
+      where rolname = 'postgres'
+    n_rows:
+      condition: ">"
+      value: 0
+    columns:
+      - condition: "="
+        name: rolname
+        value: username
+
+  # This test case will be skipped
+  - name: skipped-case
+    skip:
+      query: select 1
+      n_rows:
+        condition: "="
+        value: 1
+    query: some incorrect query which never executes
+
+  # This test case will be filed because of syntax error in skip query
+  - name: failed-case
+    description: syntax error skip test
+    skip:
+      query: i'm incorrect query
+      n_rows:
+        condition: "="
+        value: 1
+    query: another incorrect query
+
+  # This test case will be filed because of syntax error in test query
+  - name: failed-case
+    description: syntax error test case
+    query: some incorrect query
