@@ -65,54 +65,25 @@ impl<'a> Application<'a> {
                 WorkerReply::SuiteSkip {
                     suite_index,
                     result,
-                } => match result {
-                    QueryResult::Success => self.formatter.suite_skipped(&suites[suite_index]),
-                    QueryResult::Fail { .. } => {
-                        self.formatter.suite_started(&suites[suite_index]);
-                        self.send_suite(&message_sender, suite_index, &suites[suite_index])?;
-                    }
-                    QueryResult::Error { ref message } => {
-                        self.formatter.suite_error(&suites[suite_index], message)
-                    }
-                },
+                } => {
+                    self.on_suite_skip(&message_sender, &suites[suite_index], suite_index, result)?
+                }
                 WorkerReply::CaseSkip {
                     suite_index,
                     case_index,
                     result,
-                } => match result {
-                    QueryResult::Success => self.formatter.case_skipped(
-                        &suites[suite_index],
-                        &suites[suite_index].cases()[case_index],
-                    ),
-                    QueryResult::Fail { .. } => self.send_case_run(
-                        &message_sender,
-                        suite_index,
-                        case_index,
-                        &suites[suite_index].cases()[case_index],
-                    )?,
-                    QueryResult::Error { ref message } => self.formatter.case_failed(
-                        &suites[suite_index],
-                        &suites[suite_index].cases()[case_index],
-                        message,
-                    ),
-                },
+                } => self.on_case_skip(
+                    &message_sender,
+                    &suites[suite_index],
+                    suite_index,
+                    case_index,
+                    result,
+                )?,
                 WorkerReply::CaseRun {
                     suite_index,
                     case_index,
                     result,
-                } => match result {
-                    QueryResult::Success => self.formatter.case_passed(
-                        &suites[suite_index],
-                        &suites[suite_index].cases()[case_index],
-                    ),
-                    QueryResult::Fail { ref message } | QueryResult::Error { ref message } => {
-                        self.formatter.case_failed(
-                            &suites[suite_index],
-                            &suites[suite_index].cases()[case_index],
-                            message,
-                        )
-                    }
-                },
+                } => self.on_case_run(&suites[suite_index], case_index, result)?,
             }
 
             self.n_messages -= 1;
@@ -127,6 +98,62 @@ impl<'a> Application<'a> {
         worker_handler.join().unwrap();
 
         self.formatter.footer();
+
+        Ok(())
+    }
+
+    fn on_case_run(
+        &mut self,
+        suite: &TestSuite,
+        case_index: usize,
+        result: QueryResult,
+    ) -> ApplicationResult<()> {
+        let case = &suite.cases()[case_index];
+
+        match result {
+            QueryResult::Success => self.formatter.case_passed(suite, case),
+            QueryResult::Fail { ref message } | QueryResult::Error { ref message } => {
+                self.formatter.case_failed(suite, case, message)
+            }
+        }
+
+        Ok(())
+    }
+
+    fn on_case_skip(
+        &mut self,
+        sender: &SyncSender<WorkerMessage>,
+        suite: &TestSuite,
+        suite_index: usize,
+        case_index: usize,
+        result: QueryResult,
+    ) -> ApplicationResult<()> {
+        let case = &suite.cases()[case_index];
+
+        match result {
+            QueryResult::Success => self.formatter.case_skipped(suite, case),
+            QueryResult::Fail { .. } => self.send_case_run(&sender, suite_index, case_index, case)?,
+            QueryResult::Error { ref message } => self.formatter.case_failed(suite, case, message),
+        }
+
+        Ok(())
+    }
+
+    fn on_suite_skip(
+        &mut self,
+        sender: &SyncSender<WorkerMessage>,
+        suite: &TestSuite,
+        suite_index: usize,
+        result: QueryResult,
+    ) -> ApplicationResult<()> {
+        match result {
+            QueryResult::Success => self.formatter.suite_skipped(suite),
+            QueryResult::Fail { .. } => {
+                self.formatter.suite_started(suite);
+                self.send_suite(sender, suite_index, suite)?;
+            }
+            QueryResult::Error { ref message } => self.formatter.suite_error(suite, message),
+        }
 
         Ok(())
     }
