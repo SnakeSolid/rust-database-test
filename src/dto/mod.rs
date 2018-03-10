@@ -51,7 +51,8 @@ pub struct TestCase {
     #[serde(skip_serializing_if = "Option::is_none")] skip: Option<QueryClause>,
     query: String,
     #[serde(skip_serializing_if = "Option::is_none")] n_rows: Option<NRowsClause>,
-    #[serde(skip_serializing_if = "Vec::is_empty")] columns: Vec<ColumnClause>,
+    #[serde(skip_serializing_if = "Vec::is_empty", default = "Vec::default")]
+    columns: Vec<ColumnClause>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
