@@ -14,6 +14,7 @@ mod dto;
 mod validate;
 
 use application::Application;
+use application::Formatter;
 use config::Configuration;
 
 fn main() {
@@ -89,8 +90,9 @@ fn main() {
         Ok(config) => config,
         Err(err) => panic!("{}", err),
     };
+    let mut formatter = Formatter::default();
 
-    match Application::new(&config).run() {
+    match Application::new(&config, &mut formatter).run() {
         Ok(()) => {}
         Err(err) => panic!("{}", err),
     }

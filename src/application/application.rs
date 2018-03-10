@@ -11,6 +11,7 @@ use dto::TestSuite;
 
 use super::error::ApplicationError;
 use super::error::ApplicationResult;
+use super::format::Formatter;
 use super::worker::QueryResult;
 use super::worker::Worker;
 use super::worker::WorkerMessage;
@@ -19,20 +20,16 @@ use super::worker::WorkerReply;
 #[derive(Debug)]
 pub struct Application<'a> {
     config: &'a Configuration,
+    formatter: &'a mut Formatter,
     n_messages: usize,
-    tests_passed: usize,
-    tests_skipped: usize,
-    tests_failed: usize,
 }
 
 impl<'a> Application<'a> {
-    pub fn new(config: &'a Configuration) -> Application<'a> {
+    pub fn new(config: &'a Configuration, formatter: &'a mut Formatter) -> Application<'a> {
         Application {
             config,
+            formatter,
             n_messages: 0,
-            tests_passed: 0,
-            tests_skipped: 0,
-            tests_failed: 0,
         }
     }
 
@@ -42,7 +39,7 @@ impl<'a> Application<'a> {
         let (message_sender, message_receiver) = sync_channel(n_cases);
         let (reply_sender, reply_receiver) = sync_channel(n_cases);
 
-        self.display_header();
+        self.formatter.header();
 
         let worker_handler = Worker::new(
             message_receiver,
@@ -68,57 +65,44 @@ impl<'a> Application<'a> {
                 WorkerReply::SuiteSkip {
                     suite_index,
                     result,
-                } => {
-                    if let QueryResult::Success = result {
-                        self.display_suite_skipped(&suites[suite_index]);
-
-                        self.tests_skipped += suites[suite_index].cases().len();
-                    } else {
+                } => match result {
+                    QueryResult::Success => self.formatter.suite_skipped(&suites[suite_index]),
+                    QueryResult::Fail { .. } => {
+                        self.formatter.suite_started(&suites[suite_index]);
                         self.send_suite(&message_sender, suite_index, &suites[suite_index])?;
                     }
-                }
+                },
                 WorkerReply::CaseSkip {
                     suite_index,
                     case_index,
                     result,
-                } => {
-                    if let QueryResult::Success = result {
-                        self.display_case_skipped(
-                            &suites[suite_index],
-                            &suites[suite_index].cases()[case_index],
-                        );
-
-                        self.tests_skipped += 1;
-                    } else {
-                        self.send_case_run(
-                            &message_sender,
-                            suite_index,
-                            case_index,
-                            &suites[suite_index].cases()[case_index],
-                        )?;
-                    }
-                }
+                } => match result {
+                    QueryResult::Success => self.formatter.case_skipped(
+                        &suites[suite_index],
+                        &suites[suite_index].cases()[case_index],
+                    ),
+                    QueryResult::Fail { .. } => self.send_case_run(
+                        &message_sender,
+                        suite_index,
+                        case_index,
+                        &suites[suite_index].cases()[case_index],
+                    )?,
+                },
                 WorkerReply::CaseRun {
                     suite_index,
                     case_index,
                     result,
-                } => {
-                    if let QueryResult::Success = result {
-                        self.display_case_passed(
-                            &suites[suite_index],
-                            &suites[suite_index].cases()[case_index],
-                        );
-
-                        self.tests_passed += 1;
-                    } else {
-                        self.display_case_failed(
-                            &suites[suite_index],
-                            &suites[suite_index].cases()[case_index],
-                        );
-
-                        self.tests_failed += 1;
-                    }
-                }
+                } => match result {
+                    QueryResult::Success => self.formatter.case_passed(
+                        &suites[suite_index],
+                        &suites[suite_index].cases()[case_index],
+                    ),
+                    QueryResult::Fail { ref message } => self.formatter.case_failed(
+                        &suites[suite_index],
+                        &suites[suite_index].cases()[case_index],
+                        message,
+                    ),
+                },
             }
 
             self.n_messages -= 1;
@@ -132,49 +116,9 @@ impl<'a> Application<'a> {
 
         worker_handler.join().unwrap();
 
-        self.display_footer();
+        self.formatter.footer();
 
         Ok(())
-    }
-
-    fn display_footer(&self) {
-        println!("");
-        println!(
-            "test result: ok. {} passed; {} failed; {} skipped",
-            self.tests_passed, self.tests_failed, self.tests_skipped
-        );
-    }
-
-    fn display_case_passed(&self, suite: &TestSuite, case: &TestCase) {
-        let suite_name = suite.description().unwrap_or(suite.name());
-        let case_name = case.description().unwrap_or(case.name());
-
-        println!("  * {}::{} passed", suite_name, case_name);
-    }
-
-    fn display_case_failed(&self, suite: &TestSuite, case: &TestCase) {
-        let suite_name = suite.description().unwrap_or(suite.name());
-        let case_name = case.description().unwrap_or(case.name());
-
-        println!("  * {}::{} failed", suite_name, case_name);
-    }
-
-    fn display_case_skipped(&self, suite: &TestSuite, case: &TestCase) {
-        let suite_name = suite.description().unwrap_or(suite.name());
-        let case_name = case.description().unwrap_or(case.name());
-
-        println!("  * {}::{} skipped", suite_name, case_name);
-    }
-
-    fn display_suite_skipped(&self, suite: &TestSuite) {
-        let suite_name = suite.description().unwrap_or(suite.name());
-
-        println!("* {} skipped", suite_name);
-    }
-
-    fn display_header(&self) {
-        println!("running tests...");
-        println!("");
     }
 
     fn send_suite_skip(
