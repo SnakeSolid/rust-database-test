@@ -61,13 +61,22 @@ impl Formatter {
     pub fn suite_started(&mut self, suite: &TestSuite) {
         let suite_name = suite.description().unwrap_or(suite.name());
 
-        println!("* {} started", suite_name);
+        println!("* {} .. started", suite_name);
     }
 
     pub fn suite_skipped(&mut self, suite: &TestSuite) {
         let suite_name = suite.description().unwrap_or(suite.name());
 
-        println!("* {} skipped", suite_name);
+        println!("* {} .. skipped", suite_name);
+
+        self.tests_skipped += suite.cases().len();
+    }
+
+    pub fn suite_error(&mut self, suite: &TestSuite, message: &str) {
+        let suite_name = suite.description().unwrap_or(suite.name());
+
+        println!("* {} .. error", suite_name);
+        println!("  - {}", message);
 
         self.tests_skipped += suite.cases().len();
     }

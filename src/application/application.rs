@@ -71,6 +71,9 @@ impl<'a> Application<'a> {
                         self.formatter.suite_started(&suites[suite_index]);
                         self.send_suite(&message_sender, suite_index, &suites[suite_index])?;
                     }
+                    QueryResult::Error { ref message } => {
+                        self.formatter.suite_error(&suites[suite_index], message)
+                    }
                 },
                 WorkerReply::CaseSkip {
                     suite_index,
@@ -87,6 +90,11 @@ impl<'a> Application<'a> {
                         case_index,
                         &suites[suite_index].cases()[case_index],
                     )?,
+                    QueryResult::Error { ref message } => self.formatter.case_failed(
+                        &suites[suite_index],
+                        &suites[suite_index].cases()[case_index],
+                        message,
+                    ),
                 },
                 WorkerReply::CaseRun {
                     suite_index,
@@ -97,11 +105,13 @@ impl<'a> Application<'a> {
                         &suites[suite_index],
                         &suites[suite_index].cases()[case_index],
                     ),
-                    QueryResult::Fail { ref message } => self.formatter.case_failed(
-                        &suites[suite_index],
-                        &suites[suite_index].cases()[case_index],
-                        message,
-                    ),
+                    QueryResult::Fail { ref message } | QueryResult::Error { ref message } => {
+                        self.formatter.case_failed(
+                            &suites[suite_index],
+                            &suites[suite_index].cases()[case_index],
+                            message,
+                        )
+                    }
                 },
             }
 

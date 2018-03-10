@@ -4,6 +4,7 @@ use std::error::Error;
 pub enum QueryResult {
     Success,
     Fail { message: String },
+    Error { message: String },
 }
 
 impl QueryResult {
@@ -35,7 +36,7 @@ where
     E: Error,
 {
     fn from(error: E) -> QueryResult {
-        QueryResult::Fail {
+        QueryResult::Error {
             message: format!("{}", error),
         }
     }
