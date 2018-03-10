@@ -76,6 +76,17 @@ fn main() {
                 .display_order(5),
         )
         .arg(
+            Arg::with_name("nworkers")
+                .short("n")
+                .long("n-workers")
+                .takes_value(true)
+                .value_name("NWORKERS")
+                .default_value("4")
+                .validator(validate::is_n_workers)
+                .help("Number of worker threads")
+                .display_order(6),
+        )
+        .arg(
             Arg::with_name("suites")
                 .required(true)
                 .multiple(true)

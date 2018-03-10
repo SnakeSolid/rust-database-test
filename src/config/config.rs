@@ -12,6 +12,7 @@ pub struct Configuration {
     database: String,
     username: String,
     password: String,
+    n_workers: usize,
     suites: Vec<PathBuf>,
 }
 
@@ -39,6 +40,11 @@ impl Configuration {
                 .value_of("password")
                 .ok_or(ConfigurationError::EmptyPassword)?
                 .into(),
+            n_workers: matches
+                .value_of("nworkers")
+                .ok_or(ConfigurationError::EmptyNWorkers)?
+                .parse()
+                .map_err(ConfigurationError::wrong_n_workers)?,
             suites: matches
                 .values_of("suites")
                 .ok_or(ConfigurationError::EmptySuites)?
@@ -65,6 +71,10 @@ impl Configuration {
 
     pub fn password(&self) -> &String {
         &self.password
+    }
+
+    pub fn n_workers(&self) -> usize {
+        self.n_workers
     }
 
     pub fn suites(&self) -> &Vec<PathBuf> {

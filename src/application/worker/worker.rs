@@ -1,6 +1,8 @@
 use std::fmt::Display;
+use std::sync::Arc;
 use std::sync::mpsc::Receiver;
 use std::sync::mpsc::SyncSender;
+use std::sync::Mutex;
 use std::thread::Builder;
 use std::thread::JoinHandle;
 
@@ -24,7 +26,7 @@ use super::WorkerResult;
 
 #[derive(Debug)]
 pub struct Worker {
-    message_channel: Receiver<WorkerMessage>,
+    message_channel: Arc<Mutex<Receiver<WorkerMessage>>>,
     reply_channel: SyncSender<WorkerReply>,
     hostname: String,
     port: u16,
@@ -44,7 +46,7 @@ macro_rules! query_result {
 
 impl Worker {
     pub fn new(
-        message_channel: Receiver<WorkerMessage>,
+        message_channel: Arc<Mutex<Receiver<WorkerMessage>>>,
         reply_channel: SyncSender<WorkerReply>,
         hostname: &str,
         port: u16,
@@ -76,7 +78,12 @@ impl Worker {
     }
 
     fn run(self, connection: Connection) {
-        for message in self.message_channel {
+        loop {
+            let message = match self.next_message() {
+                Ok(message) => message,
+                Err(_) => break,
+            };
+
             match message {
                 WorkerMessage::SuiteSkip {
                     suite_index,
@@ -109,6 +116,12 @@ impl Worker {
                 }
             }
         }
+    }
+
+    fn next_message(&self) -> Result<WorkerMessage, ()> {
+        let guard = self.message_channel.lock().map_err(|_| ())?;
+
+        guard.recv().map_err(|_| ())
     }
 
     fn execute_case(connection: &Connection, case: &TestCase) -> QueryResult {

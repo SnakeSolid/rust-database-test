@@ -1,5 +1,10 @@
 use std::fs::File;
+use std::sync::Arc;
+use std::sync::mpsc::Receiver;
 use std::sync::mpsc::sync_channel;
+use std::sync::mpsc::SyncSender;
+use std::sync::Mutex;
+use std::thread::JoinHandle;
 
 use serde_yaml;
 
@@ -12,6 +17,7 @@ use super::error::ApplicationResult;
 use super::format::Formatter;
 use super::worker::QueryResult;
 use super::worker::Worker;
+use super::worker::WorkerMessage;
 use super::worker::WorkerReply;
 
 #[derive(Debug)]
@@ -37,19 +43,9 @@ impl<'a> Application<'a> {
         let (message_sender, message_receiver) = sync_channel(n_cases);
         let (reply_sender, reply_receiver) = sync_channel(n_cases);
         let bus = MessageBus::new(message_sender, reply_receiver);
+        let workers = self.spawn_workers(message_receiver, reply_sender)?;
 
         self.formatter.header();
-
-        let worker_handler = Worker::new(
-            message_receiver,
-            reply_sender,
-            self.config.hostname(),
-            self.config.port(),
-            self.config.database(),
-            self.config.username(),
-            self.config.password(),
-        ).start()
-            .map_err(ApplicationError::worker_error)?;
 
         for (suite_index, suite) in self.suites.iter().enumerate() {
             if let Some(skip) = suite.skip() {
@@ -76,11 +72,48 @@ impl<'a> Application<'a> {
             } => self.on_case_run(suite_index, case_index, result),
         })?;
 
-        worker_handler.join().unwrap();
-
         self.formatter.footer();
+        self.join_workers(workers);
 
         Ok(())
+    }
+
+    fn join_workers(&self, workers: Vec<JoinHandle<()>>) {
+        for worker in workers {
+            match worker.join() {
+                Ok(_) => {}
+                Err(_) => println!("Failed to join worker thread"),
+            }
+        }
+    }
+
+    fn spawn_workers(
+        &self,
+        message_receiver: Receiver<WorkerMessage>,
+        reply_sender: SyncSender<WorkerReply>,
+    ) -> ApplicationResult<Vec<JoinHandle<()>>> {
+        let n_workers = self.config.n_workers();
+        let message_receiver = Arc::new(Mutex::new(message_receiver));
+        let mut workers = Vec::with_capacity(n_workers);
+
+        for _ in 0..n_workers {
+            let message_receiver = message_receiver.clone();
+            let reply_sender = reply_sender.clone();
+            let worker_handler = Worker::new(
+                message_receiver,
+                reply_sender,
+                self.config.hostname(),
+                self.config.port(),
+                self.config.database(),
+                self.config.username(),
+                self.config.password(),
+            ).start()
+                .map_err(ApplicationError::worker_error)?;
+
+            workers.push(worker_handler);
+        }
+
+        Ok(workers)
     }
 
     fn on_case_run(
