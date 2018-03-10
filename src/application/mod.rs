@@ -1,4 +1,5 @@
 mod application;
+mod bus;
 mod error;
 mod format;
 mod worker;
