@@ -1,4 +1,3 @@
-use std::fmt::Display;
 use std::sync::Arc;
 use std::sync::mpsc::Receiver;
 use std::sync::mpsc::SyncSender;
@@ -7,18 +6,13 @@ use std::thread::Builder;
 use std::thread::JoinHandle;
 
 use postgres::Connection;
-use postgres::Result as PgResult;
-use postgres::rows::Row;
 use postgres::TlsMode;
 
-use dto::ColumnClause;
-use dto::Condition;
-use dto::NRowsClause;
 use dto::QueryClause;
 use dto::TestCase;
-use dto::Value;
 
 use super::QueryResult;
+use super::util;
 use super::WorkerError;
 use super::WorkerMessage;
 use super::WorkerReply;
@@ -40,6 +34,15 @@ macro_rules! query_result {
         match $e {
             QueryResult::Success => {}
             _ => return $e,
+        }
+    }
+}
+
+macro_rules! try_query_result {
+    ($e : expr) => {
+        match $e {
+            Ok(result) => result,
+            Err(err) => return err.into(),
         }
     }
 }
@@ -126,26 +129,19 @@ impl Worker {
 
     fn execute_case(connection: &Connection, case: &TestCase) -> QueryResult {
         let query = case.query();
-        let transaction = match connection.transaction() {
-            Ok(transaction) => transaction,
-            Err(err) => return err.into(),
-        };
-
+        let transaction = try_query_result!(connection.transaction());
         transaction.set_rollback();
 
-        let rows = match transaction.query(query, &[]) {
-            Ok(rows) => rows,
-            Err(err) => return err.into(),
-        };
+        let rows = try_query_result!(transaction.query(query, &[]));
 
         if let Some(n_rows) = case.n_rows() {
-            query_result!(Worker::assert_n_rows(rows.len(), n_rows));
+            query_result!(util::assert_n_rows(rows.len(), n_rows));
         }
 
         if !case.columns().is_empty() {
             for row in &rows {
                 for column in case.columns() {
-                    query_result!(Worker::assert_column(&row, column));
+                    query_result!(util::assert_column(&row, column));
                 }
             }
         }
@@ -155,117 +151,9 @@ impl Worker {
 
     fn execute_clause(connection: &Connection, clause: &QueryClause) -> QueryResult {
         let query = clause.query();
-        let rows = match connection.query(query, &[]) {
-            Ok(rows) => rows,
-            Err(err) => return err.into(),
-        };
+        let rows = try_query_result!(connection.query(query, &[]));
         let actual_rows = rows.len();
 
-        Worker::assert_n_rows(actual_rows, clause.n_rows())
-    }
-
-    fn assert_column(row: &Row, column: &ColumnClause) -> QueryResult {
-        let value = column.value();
-
-        match *value {
-            Value::Integer(ref value) => Worker::assert_column_integer(row, column, *value),
-            Value::Float(ref value) => Worker::assert_column_float(row, column, *value),
-            Value::String(ref value) => Worker::assert_column_string(row, column, value),
-        }
-    }
-
-    fn assert_column_string(
-        row: &Row,
-        column: &ColumnClause,
-        expected_value: &String,
-    ) -> QueryResult {
-        let condition = column.condition();
-        let name = column.name();
-        let actual_value: Option<PgResult<String>> = row.get_opt(name);
-
-        match actual_value {
-            None => QueryResult::fail(format!("Column {} does not exists", name)),
-            Some(Err(err)) => QueryResult::fail(format!("Failed to get {} value - {}", name, err)),
-            Some(Ok(ref actual_value)) => Worker::test_condition(
-                format!("Column {}", name),
-                condition,
-                expected_value,
-                actual_value,
-            ),
-        }
-    }
-
-    fn assert_column_float(row: &Row, column: &ColumnClause, expected_value: f64) -> QueryResult {
-        let condition = column.condition();
-        let name = column.name();
-        let actual_value: Option<PgResult<f64>> = row.get_opt(name);
-
-        match actual_value {
-            None => QueryResult::fail(format!("Column {} does not exists", name)),
-            Some(Err(err)) => QueryResult::fail(format!("Failed to get {} value - {}", name, err)),
-            Some(Ok(actual_value)) => Worker::test_condition(
-                format!("Column {}", name),
-                condition,
-                expected_value,
-                actual_value,
-            ),
-        }
-    }
-
-    fn assert_column_integer(row: &Row, column: &ColumnClause, expected_value: i64) -> QueryResult {
-        let condition = column.condition();
-        let name = column.name();
-        let actual_value: Option<PgResult<i64>> = row.get_opt(name);
-
-        match actual_value {
-            None => QueryResult::fail(format!("Column {} does not exists", name)),
-            Some(Err(err)) => QueryResult::fail(format!("Failed to get {} value - {}", name, err)),
-            Some(Ok(actual_value)) => Worker::test_condition(
-                format!("Column {}", name),
-                condition,
-                expected_value,
-                actual_value,
-            ),
-        }
-    }
-
-    fn assert_n_rows(actual_rows: usize, n_rows: &NRowsClause) -> QueryResult {
-        let condition = n_rows.condition();
-        let expected_rows = n_rows.value();
-
-        Worker::test_condition("N rows", condition, expected_rows, actual_rows)
-    }
-
-    fn test_condition<S, T>(name: S, condition: Condition, expected: T, actual: T) -> QueryResult
-    where
-        S: Display,
-        T: PartialEq + PartialOrd + Display,
-    {
-        match condition {
-            Condition::Equal => QueryResult::from_condition(
-                actual == expected,
-                format!("{} failed: {} == {}", name, actual, expected),
-            ),
-            Condition::NotEqual => QueryResult::from_condition(
-                actual != expected,
-                format!("{} failed: {} != {}", name, actual, expected),
-            ),
-            Condition::Less => QueryResult::from_condition(
-                actual < expected,
-                format!("{} failed: {} < {}", name, actual, expected),
-            ),
-            Condition::Greater => QueryResult::from_condition(
-                actual > expected,
-                format!("{} failed: {} > {}", name, actual, expected),
-            ),
-            Condition::LessOrEqual => QueryResult::from_condition(
-                actual <= expected,
-                format!("{} failed: {} <= {}", name, actual, expected),
-            ),
-            Condition::GreaterOrEqual => QueryResult::from_condition(
-                actual >= expected,
-                format!("{} failed: {} >= {}", name, actual, expected),
-            ),
-        }
+        util::assert_n_rows(actual_rows, clause.n_rows())
     }
 }

@@ -2,6 +2,7 @@ mod error;
 mod message;
 mod query;
 mod reply;
+mod util;
 mod worker;
 
 pub use self::error::WorkerError;
