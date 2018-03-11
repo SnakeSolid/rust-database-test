@@ -20,7 +20,6 @@ use super::worker::Worker;
 use super::worker::WorkerMessage;
 use super::worker::WorkerReply;
 
-#[derive(Debug)]
 pub struct Application<'a> {
     config: &'a Configuration,
     formatter: &'a mut Formatter,

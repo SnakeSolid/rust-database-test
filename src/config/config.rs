@@ -13,6 +13,7 @@ pub struct Configuration {
     username: String,
     password: String,
     n_workers: usize,
+    text_mode: bool,
     suites: Vec<PathBuf>,
 }
 
@@ -45,6 +46,7 @@ impl Configuration {
                 .ok_or(ConfigurationError::EmptyNWorkers)?
                 .parse()
                 .map_err(ConfigurationError::wrong_n_workers)?,
+            text_mode: matches.is_present("textmode"),
             suites: matches
                 .values_of("suites")
                 .ok_or(ConfigurationError::EmptySuites)?
@@ -75,6 +77,10 @@ impl Configuration {
 
     pub fn n_workers(&self) -> usize {
         self.n_workers
+    }
+
+    pub fn text_mode(&self) -> bool {
+        self.text_mode
     }
 
     pub fn suites(&self) -> &Vec<PathBuf> {

@@ -10,21 +10,23 @@ use term;
 use dto::TestCase;
 use dto::TestSuite;
 
+use super::Formatter;
+
 #[derive(Debug)]
-pub struct Formatter {
+pub struct ColorFormatter {
     tests_passed: usize,
     tests_skipped: usize,
     tests_failed: usize,
 }
 
-impl Formatter {
-    pub fn header(&self) {
+impl Formatter for ColorFormatter {
+    fn header(&self) {
         println!("");
         println!("running tests...");
         println!("");
     }
 
-    pub fn footer(&self) {
+    fn footer(&self) {
         println!("");
         print!("test result: ");
 
@@ -43,7 +45,7 @@ impl Formatter {
         println!("");
     }
 
-    pub fn case_passed(&mut self, suite: &TestSuite, case: &TestCase) {
+    fn case_passed(&mut self, suite: &TestSuite, case: &TestCase) {
         let suite_name = suite.description().unwrap_or(suite.name());
         let case_name = case.description().unwrap_or(case.name());
 
@@ -53,7 +55,7 @@ impl Formatter {
         self.tests_passed += 1;
     }
 
-    pub fn case_failed(&mut self, suite: &TestSuite, case: &TestCase, message: &str) {
+    fn case_failed(&mut self, suite: &TestSuite, case: &TestCase, message: &str) {
         let suite_name = suite.description().unwrap_or(suite.name());
         let case_name = case.description().unwrap_or(case.name());
 
@@ -64,7 +66,7 @@ impl Formatter {
         self.tests_failed += 1;
     }
 
-    pub fn case_skipped(&mut self, suite: &TestSuite, case: &TestCase) {
+    fn case_skipped(&mut self, suite: &TestSuite, case: &TestCase) {
         let suite_name = suite.description().unwrap_or(suite.name());
         let case_name = case.description().unwrap_or(case.name());
 
@@ -74,13 +76,13 @@ impl Formatter {
         self.tests_skipped += 1;
     }
 
-    pub fn suite_started(&mut self, suite: &TestSuite) {
+    fn suite_started(&mut self, suite: &TestSuite) {
         let suite_name = suite.description().unwrap_or(suite.name());
 
         println!("* {} .. started", suite_name);
     }
 
-    pub fn suite_skipped(&mut self, suite: &TestSuite) {
+    fn suite_skipped(&mut self, suite: &TestSuite) {
         let suite_name = suite.description().unwrap_or(suite.name());
 
         print!("* {} .. ", suite_name);
@@ -89,7 +91,7 @@ impl Formatter {
         self.tests_skipped += suite.cases().len();
     }
 
-    pub fn suite_error(&mut self, suite: &TestSuite, message: &str) {
+    fn suite_error(&mut self, suite: &TestSuite, message: &str) {
         let suite_name = suite.description().unwrap_or(suite.name());
 
         print!("* {} .. ", suite_name);
@@ -100,9 +102,9 @@ impl Formatter {
     }
 }
 
-impl Default for Formatter {
-    fn default() -> Formatter {
-        Formatter {
+impl Default for ColorFormatter {
+    fn default() -> ColorFormatter {
+        ColorFormatter {
             tests_passed: 0,
             tests_skipped: 0,
             tests_failed: 0,

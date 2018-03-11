@@ -15,7 +15,9 @@ mod dto;
 mod validate;
 
 use application::Application;
+use application::ColorFormatter;
 use application::Formatter;
+use application::PlainFormatter;
 use config::Configuration;
 
 fn main() {
@@ -88,6 +90,13 @@ fn main() {
                 .display_order(6),
         )
         .arg(
+            Arg::with_name("textmode")
+                .short("t")
+                .long("text-mode")
+                .help("Use plain text mode instead of color")
+                .display_order(7),
+        )
+        .arg(
             Arg::with_name("suites")
                 .required(true)
                 .multiple(true)
@@ -102,9 +111,13 @@ fn main() {
         Ok(config) => config,
         Err(err) => panic!("{}", err),
     };
-    let mut formatter = Formatter::default();
+    let mut formatter: Box<Formatter> = if config.text_mode() {
+        Box::new(PlainFormatter::default())
+    } else {
+        Box::new(ColorFormatter::default())
+    };
 
-    match Application::new(&config, &mut formatter).run() {
+    match Application::new(&config, formatter.as_mut()).run() {
         Ok(()) => {}
         Err(err) => panic!("{}", err),
     }
