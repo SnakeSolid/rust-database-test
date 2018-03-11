@@ -4,6 +4,7 @@ extern crate serde_derive;
 extern crate clap;
 extern crate postgres;
 extern crate serde_yaml;
+extern crate term;
 
 use clap::App;
 use clap::Arg;

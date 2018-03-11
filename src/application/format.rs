@@ -1,3 +1,12 @@
+use term::color::Color;
+use term::color::GREEN;
+use term::color::RED;
+use term::color::YELLOW;
+use term::Error as TermError;
+use term::Result as TermResult;
+use term::StdoutTerminal;
+use term;
+
 use dto::TestCase;
 use dto::TestSuite;
 
@@ -10,31 +19,36 @@ pub struct Formatter {
 
 impl Formatter {
     pub fn header(&self) {
+        println!("");
         println!("running tests...");
         println!("");
     }
 
     pub fn footer(&self) {
         println!("");
+        print!("test result: ");
 
-        if self.tests_failed == 0 {
-            println!(
-                "test result: ok. {} passed; {} failed; {} skipped",
-                self.tests_passed, self.tests_failed, self.tests_skipped
-            );
+        if self.tests_passed == 0 && self.tests_failed == 0 {
+            print_with_color(YELLOW, "skipped");
+        } else if self.tests_failed == 0 {
+            print_with_color(RED, "failed");
         } else {
-            println!(
-                "test result: fail. {} passed; {} failed; {} skipped",
-                self.tests_passed, self.tests_failed, self.tests_skipped
-            );
+            print_with_color(GREEN, "passed");
         }
+
+        println!(
+            ". {} passed; {} failed; {} skipped",
+            self.tests_passed, self.tests_failed, self.tests_skipped
+        );
+        println!("");
     }
 
     pub fn case_passed(&mut self, suite: &TestSuite, case: &TestCase) {
         let suite_name = suite.description().unwrap_or(suite.name());
         let case_name = case.description().unwrap_or(case.name());
 
-        println!("  * {}::{} .. passed", suite_name, case_name);
+        print!("  * {}::{} .. ", suite_name, case_name);
+        println_with_color(GREEN, "passed");
 
         self.tests_passed += 1;
     }
@@ -43,7 +57,8 @@ impl Formatter {
         let suite_name = suite.description().unwrap_or(suite.name());
         let case_name = case.description().unwrap_or(case.name());
 
-        println!("  * {}::{} .. failed", suite_name, case_name);
+        print!("  * {}::{} .. ", suite_name, case_name);
+        println_with_color(RED, "failed");
         println!("    - {}", message);
 
         self.tests_failed += 1;
@@ -53,7 +68,8 @@ impl Formatter {
         let suite_name = suite.description().unwrap_or(suite.name());
         let case_name = case.description().unwrap_or(case.name());
 
-        println!("  * {}::{} .. skipped", suite_name, case_name);
+        print!("  * {}::{} .. ", suite_name, case_name);
+        println_with_color(YELLOW, "skipped");
 
         self.tests_skipped += 1;
     }
@@ -67,7 +83,8 @@ impl Formatter {
     pub fn suite_skipped(&mut self, suite: &TestSuite) {
         let suite_name = suite.description().unwrap_or(suite.name());
 
-        println!("* {} .. skipped", suite_name);
+        print!("* {} .. ", suite_name);
+        println_with_color(YELLOW, "skipped");
 
         self.tests_skipped += suite.cases().len();
     }
@@ -75,7 +92,8 @@ impl Formatter {
     pub fn suite_error(&mut self, suite: &TestSuite, message: &str) {
         let suite_name = suite.description().unwrap_or(suite.name());
 
-        println!("* {} .. error", suite_name);
+        print!("* {} .. ", suite_name);
+        println_with_color(RED, "error");
         println!("  - {}", message);
 
         self.tests_skipped += suite.cases().len();
@@ -89,5 +107,38 @@ impl Default for Formatter {
             tests_skipped: 0,
             tests_failed: 0,
         }
+    }
+}
+
+fn try_terminal<F>(callback: F) -> TermResult<()>
+where
+    F: Fn(&mut StdoutTerminal) -> TermResult<()>,
+{
+    match term::stdout() {
+        Some(mut f) => callback(f.as_mut()),
+        None => Err(TermError::NotSupported),
+    }
+}
+
+fn print_with_color(color: Color, value: &str) {
+    if let Err(_) = try_terminal(|f| {
+        f.fg(color)?;
+        write!(f, "{}", value)?;
+        f.reset()
+    }) {
+        print!("{}", value);
+    }
+}
+
+fn println_with_color(color: Color, value: &str) {
+    if let Err(_) = try_terminal(|f| {
+        f.fg(color)?;
+        write!(f, "{}", value)?;
+        f.reset()?;
+        writeln!(f, "")?;
+
+        Ok(())
+    }) {
+        println!("{}", value);
     }
 }
