@@ -19,9 +19,18 @@ Optional arguments:
 * `-u` (`--user-name`) USERNAME: PostgreSQL user name;
 * `-w` (`--password`) PASSWORD: PostgreSQL password;
 * `-d` (`--database`) DATABASE: PostgreSQL database;
+* `-t` (`--text-mode`): Use plain text mode instead of color.
 * `-n` (`--n-workers`) NWORKERS: Number of worker threads, default value - 4.
 
 Also all possible arguments can be shown with `--help` option.
+
+## Exit code
+
+The application returns exit code for automated testing. There ase three possible exit codes:
+
+* `0` - all tests passed or skipped, on failed tests;
+* `1` - at least one test failed;
+* `2` - error occurred during startup (server refused connection, malformed YAML, etc).
 
 ## Test suite file
 
