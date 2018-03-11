@@ -32,7 +32,7 @@ impl Formatter for ColorFormatter {
 
         if self.tests_passed == 0 && self.tests_failed == 0 {
             print_with_color(YELLOW, "skipped");
-        } else if self.tests_failed == 0 {
+        } else if self.tests_failed > 0 {
             print_with_color(RED, "failed");
         } else {
             print_with_color(GREEN, "passed");

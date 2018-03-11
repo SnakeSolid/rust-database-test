@@ -23,7 +23,7 @@ impl Formatter for PlainFormatter {
 
         if self.tests_passed == 0 && self.tests_failed == 0 {
             print!("skipped");
-        } else if self.tests_failed == 0 {
+        } else if self.tests_failed > 0 {
             print!("failed");
         } else {
             print!("passed");
