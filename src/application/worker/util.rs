@@ -58,29 +58,124 @@ where
     T: PartialEq + PartialOrd + Display,
 {
     match condition {
-        Condition::Equal => QueryResult::from_condition(
+        Condition::Equal => make_query_result(
             actual == expected,
             format!("{} failed: {} == {}", name, actual, expected),
         ),
-        Condition::NotEqual => QueryResult::from_condition(
+        Condition::NotEqual => make_query_result(
             actual != expected,
             format!("{} failed: {} != {}", name, actual, expected),
         ),
-        Condition::Less => QueryResult::from_condition(
+        Condition::Less => make_query_result(
             actual < expected,
             format!("{} failed: {} < {}", name, actual, expected),
         ),
-        Condition::Greater => QueryResult::from_condition(
+        Condition::Greater => make_query_result(
             actual > expected,
             format!("{} failed: {} > {}", name, actual, expected),
         ),
-        Condition::LessOrEqual => QueryResult::from_condition(
+        Condition::LessOrEqual => make_query_result(
             actual <= expected,
             format!("{} failed: {} <= {}", name, actual, expected),
         ),
-        Condition::GreaterOrEqual => QueryResult::from_condition(
+        Condition::GreaterOrEqual => make_query_result(
             actual >= expected,
             format!("{} failed: {} >= {}", name, actual, expected),
         ),
+    }
+}
+
+#[inline]
+fn make_query_result<S>(condition: bool, message: S) -> QueryResult
+where
+    S: Into<String>,
+{
+    if condition {
+        QueryResult::success()
+    } else {
+        QueryResult::fail(message)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use serde_yaml;
+
+    use dto::ColumnClause;
+    use dto::NRowsClause;
+
+    use super::assert_n_rows;
+    use super::QueryResult;
+
+    #[test]
+    fn n_rows_success_if_actual_eq_expected() {
+        let n_rows: NRowsClause = serde_yaml::from_str("{ condition : =, value : 3 }").unwrap();
+        let assert_2_rows = assert_n_rows(2, &n_rows);
+        let assert_3_rows = assert_n_rows(3, &n_rows);
+        let assert_4_rows = assert_n_rows(4, &n_rows);
+
+        assert_eq!(QueryResult::fail("N rows failed: 2 == 3"), assert_2_rows);
+        assert_eq!(QueryResult::success(), assert_3_rows);
+        assert_eq!(QueryResult::fail("N rows failed: 4 == 3"), assert_4_rows);
+    }
+
+    #[test]
+    fn n_rows_success_if_actual_ne_expected() {
+        let n_rows: NRowsClause = serde_yaml::from_str("{ condition : '!=', value : 3 }").unwrap();
+        let assert_2_rows = assert_n_rows(2, &n_rows);
+        let assert_3_rows = assert_n_rows(3, &n_rows);
+        let assert_4_rows = assert_n_rows(4, &n_rows);
+
+        assert_eq!(QueryResult::success(), assert_2_rows);
+        assert_eq!(QueryResult::fail("N rows failed: 3 != 3"), assert_3_rows);
+        assert_eq!(QueryResult::success(), assert_4_rows);
+    }
+
+    #[test]
+    fn n_rows_success_if_actual_lt_expected() {
+        let n_rows: NRowsClause = serde_yaml::from_str("{ condition : <, value : 3 }").unwrap();
+        let assert_2_rows = assert_n_rows(2, &n_rows);
+        let assert_3_rows = assert_n_rows(3, &n_rows);
+        let assert_4_rows = assert_n_rows(4, &n_rows);
+
+        assert_eq!(QueryResult::success(), assert_2_rows);
+        assert_eq!(QueryResult::fail("N rows failed: 3 < 3"), assert_3_rows);
+        assert_eq!(QueryResult::fail("N rows failed: 4 < 3"), assert_4_rows);
+    }
+
+    #[test]
+    fn n_rows_success_if_actual_gt_expected() {
+        let n_rows: NRowsClause = serde_yaml::from_str("{ condition : >, value : 3 }").unwrap();
+        let assert_2_rows = assert_n_rows(2, &n_rows);
+        let assert_3_rows = assert_n_rows(3, &n_rows);
+        let assert_4_rows = assert_n_rows(4, &n_rows);
+
+        assert_eq!(QueryResult::fail("N rows failed: 2 > 3"), assert_2_rows);
+        assert_eq!(QueryResult::fail("N rows failed: 3 > 3"), assert_3_rows);
+        assert_eq!(QueryResult::success(), assert_4_rows);
+    }
+
+    #[test]
+    fn n_rows_success_if_actual_le_expected() {
+        let n_rows: NRowsClause = serde_yaml::from_str("{ condition : <=, value : 3 }").unwrap();
+        let assert_2_rows = assert_n_rows(2, &n_rows);
+        let assert_3_rows = assert_n_rows(3, &n_rows);
+        let assert_4_rows = assert_n_rows(4, &n_rows);
+
+        assert_eq!(QueryResult::success(), assert_2_rows);
+        assert_eq!(QueryResult::success(), assert_3_rows);
+        assert_eq!(QueryResult::fail("N rows failed: 4 <= 3"), assert_4_rows);
+    }
+
+    #[test]
+    fn n_rows_success_if_actual_ge_expected() {
+        let n_rows: NRowsClause = serde_yaml::from_str("{ condition : >=, value : 3 }").unwrap();
+        let assert_2_rows = assert_n_rows(2, &n_rows);
+        let assert_3_rows = assert_n_rows(3, &n_rows);
+        let assert_4_rows = assert_n_rows(4, &n_rows);
+
+        assert_eq!(QueryResult::fail("N rows failed: 2 >= 3"), assert_2_rows);
+        assert_eq!(QueryResult::success(), assert_3_rows);
+        assert_eq!(QueryResult::success(), assert_4_rows);
     }
 }

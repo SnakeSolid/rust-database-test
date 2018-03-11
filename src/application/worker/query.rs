@@ -1,6 +1,6 @@
 use std::error::Error;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum QueryResult {
     Success,
     Fail { message: String },
@@ -8,19 +8,12 @@ pub enum QueryResult {
 }
 
 impl QueryResult {
-    pub fn from_condition<S>(condition: bool, message: S) -> QueryResult
-    where
-        S: Into<String>,
-    {
-        if condition {
-            QueryResult::Success
-        } else {
-            QueryResult::Fail {
-                message: message.into(),
-            }
-        }
+    #[inline]
+    pub fn success() -> QueryResult {
+        QueryResult::Success
     }
 
+    #[inline]
     pub fn fail<S>(message: S) -> QueryResult
     where
         S: Into<String>,
