@@ -15,6 +15,7 @@ use super::bus::MessageBus;
 use super::error::ApplicationError;
 use super::error::ApplicationResult;
 use super::format::Formatter;
+use super::status::ApplicationStatus;
 use super::worker::QueryResult;
 use super::worker::Worker;
 use super::worker::WorkerMessage;
@@ -24,6 +25,7 @@ pub struct Application<'a> {
     config: &'a Configuration,
     formatter: &'a mut Formatter,
     suites: Vec<TestSuite>,
+    status: ApplicationStatus,
 }
 
 impl<'a> Application<'a> {
@@ -32,10 +34,11 @@ impl<'a> Application<'a> {
             config,
             formatter,
             suites: Vec::default(),
+            status: ApplicationStatus::Success,
         }
     }
 
-    pub fn run(mut self) -> ApplicationResult<()> {
+    pub fn run(mut self) -> ApplicationResult<ApplicationStatus> {
         self.read_suites()?;
 
         let n_cases = self.get_n_cases();
@@ -74,7 +77,7 @@ impl<'a> Application<'a> {
         self.formatter.footer();
         self.join_workers(workers);
 
-        Ok(())
+        Ok(self.status)
     }
 
     fn join_workers(&self, workers: Vec<JoinHandle<()>>) {
@@ -127,7 +130,8 @@ impl<'a> Application<'a> {
         match result {
             QueryResult::Success => self.formatter.case_passed(suite, case),
             QueryResult::Fail { ref message } | QueryResult::Error { ref message } => {
-                self.formatter.case_failed(suite, case, message)
+                self.status = ApplicationStatus::Fail;
+                self.formatter.case_failed(suite, case, message);
             }
         }
 
@@ -147,7 +151,10 @@ impl<'a> Application<'a> {
         match result {
             QueryResult::Success => self.formatter.case_skipped(suite, case),
             QueryResult::Fail { .. } => bus.send_case_run(suite_index, case_index, case)?,
-            QueryResult::Error { ref message } => self.formatter.case_failed(suite, case, message),
+            QueryResult::Error { ref message } => {
+                self.status = ApplicationStatus::Fail;
+                self.formatter.case_failed(suite, case, message);
+            }
         }
 
         Ok(())
@@ -167,7 +174,10 @@ impl<'a> Application<'a> {
                 self.formatter.suite_started(suite);
                 bus.send_suite(suite_index, suite)?;
             }
-            QueryResult::Error { ref message } => self.formatter.suite_error(suite, message),
+            QueryResult::Error { ref message } => {
+                self.status = ApplicationStatus::Fail;
+                self.formatter.suite_error(suite, message)
+            }
         }
 
         Ok(())

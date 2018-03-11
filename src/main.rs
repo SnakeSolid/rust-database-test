@@ -6,6 +6,8 @@ extern crate postgres;
 extern crate serde_yaml;
 extern crate term;
 
+use std::process;
+
 use clap::App;
 use clap::Arg;
 
@@ -15,12 +17,22 @@ mod dto;
 mod validate;
 
 use application::Application;
+use application::ApplicationResult;
+use application::ApplicationStatus;
 use application::ColorFormatter;
 use application::Formatter;
 use application::PlainFormatter;
 use config::Configuration;
 
 fn main() {
+    process::exit(match start_app() {
+        Ok(ApplicationStatus::Success) => 0,
+        Ok(ApplicationStatus::Fail) => 1,
+        Err(_) => 2,
+    });
+}
+
+fn start_app() -> ApplicationResult<ApplicationStatus> {
     let matches = App::new("Database Test")
         .version("0.1")
         .author("Anton Shabanov <snakesolid@ngs.ru>")
@@ -116,9 +128,11 @@ fn main() {
     } else {
         Box::new(ColorFormatter::default())
     };
+    let result = Application::new(&config, formatter.as_mut()).run();
 
-    match Application::new(&config, formatter.as_mut()).run() {
-        Ok(()) => {}
-        Err(err) => panic!("{}", err),
+    if let Err(ref err) = result {
+        println!("{}", err);
     }
+
+    result
 }
