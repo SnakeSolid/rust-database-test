@@ -126,7 +126,14 @@ impl Worker {
 
     fn execute_case(connection: &Connection, case: &TestCase) -> QueryResult {
         let query = case.query();
-        let rows = match connection.query(query, &[]) {
+        let transaction = match connection.transaction() {
+            Ok(transaction) => transaction,
+            Err(err) => return err.into(),
+        };
+
+        transaction.set_rollback();
+
+        let rows = match transaction.query(query, &[]) {
             Ok(rows) => rows,
             Err(err) => return err.into(),
         };
