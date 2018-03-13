@@ -23,6 +23,15 @@ use application::ColorFormatter;
 use application::Formatter;
 use application::PlainFormatter;
 use config::Configuration;
+use config::DATABASE;
+use config::HOSTNAME;
+use config::NWORKERS;
+use config::PASSWORD;
+use config::PORT;
+use config::RECURSIVE;
+use config::SUITES;
+use config::TEXTMODE;
+use config::USERNAME;
 
 fn main() {
     process::exit(match start_app() {
@@ -38,7 +47,7 @@ fn start_app() -> ApplicationResult<ApplicationStatus> {
         .author("Anton Shabanov <snakesolid@ngs.ru>")
         .about("Executes simple test suites for PostgreSQL databases.")
         .arg(
-            Arg::with_name("hostname")
+            Arg::with_name(HOSTNAME)
                 .short("h")
                 .long("host-name")
                 .required(true)
@@ -49,7 +58,7 @@ fn start_app() -> ApplicationResult<ApplicationStatus> {
                 .display_order(1),
         )
         .arg(
-            Arg::with_name("port")
+            Arg::with_name(PORT)
                 .short("p")
                 .long("port")
                 .required(true)
@@ -61,7 +70,7 @@ fn start_app() -> ApplicationResult<ApplicationStatus> {
                 .display_order(2),
         )
         .arg(
-            Arg::with_name("username")
+            Arg::with_name(USERNAME)
                 .short("u")
                 .long("user-name")
                 .required(true)
@@ -71,7 +80,7 @@ fn start_app() -> ApplicationResult<ApplicationStatus> {
                 .display_order(3),
         )
         .arg(
-            Arg::with_name("password")
+            Arg::with_name(PASSWORD)
                 .short("w")
                 .long("password")
                 .required(true)
@@ -81,7 +90,7 @@ fn start_app() -> ApplicationResult<ApplicationStatus> {
                 .display_order(4),
         )
         .arg(
-            Arg::with_name("database")
+            Arg::with_name(DATABASE)
                 .short("d")
                 .long("database")
                 .required(true)
@@ -91,7 +100,7 @@ fn start_app() -> ApplicationResult<ApplicationStatus> {
                 .display_order(5),
         )
         .arg(
-            Arg::with_name("nworkers")
+            Arg::with_name(NWORKERS)
                 .short("n")
                 .long("n-workers")
                 .takes_value(true)
@@ -102,19 +111,26 @@ fn start_app() -> ApplicationResult<ApplicationStatus> {
                 .display_order(6),
         )
         .arg(
-            Arg::with_name("textmode")
-                .short("t")
-                .long("text-mode")
-                .help("Use plain text mode instead of color")
+            Arg::with_name(RECURSIVE)
+                .short("r")
+                .long("recursive")
+                .help("Read all files under each directory, recursively")
                 .display_order(7),
         )
         .arg(
-            Arg::with_name("suites")
+            Arg::with_name(TEXTMODE)
+                .short("t")
+                .long("text-mode")
+                .help("Use plain text mode instead of color")
+                .display_order(8),
+        )
+        .arg(
+            Arg::with_name(SUITES)
                 .required(true)
                 .multiple(true)
                 .last(true)
                 .value_name("SUITES")
-                .validator(validate::is_file)
+                .validator(validate::is_exists)
                 .help("Test suites to execute"),
         )
         .get_matches();

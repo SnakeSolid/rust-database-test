@@ -20,15 +20,12 @@ pub fn is_n_workers(val: String) -> Result<(), String> {
     }
 }
 
-pub fn is_file(val: String) -> Result<(), String> {
+pub fn is_exists(val: String) -> Result<(), String> {
     let path = Path::new(&val);
 
-    if path.is_file() {
+    if path.exists() {
         Ok(())
     } else {
-        Err(format!(
-            "Test suite must exists and be a file, but {} given",
-            val
-        ))
+        Err(format!("Test suite {} must exists", val))
     }
 }

@@ -1,12 +1,9 @@
-use std::fs::File;
 use std::sync::Arc;
 use std::sync::mpsc::Receiver;
 use std::sync::mpsc::sync_channel;
 use std::sync::mpsc::SyncSender;
 use std::sync::Mutex;
 use std::thread::JoinHandle;
-
-use serde_yaml;
 
 use config::Configuration;
 use dto::TestSuite;
@@ -15,6 +12,7 @@ use super::bus::MessageBus;
 use super::error::ApplicationError;
 use super::error::ApplicationResult;
 use super::format::Formatter;
+use super::read::SuiteReader;
 use super::status::ApplicationStatus;
 use super::worker::QueryResult;
 use super::worker::Worker;
@@ -188,13 +186,10 @@ impl<'a> Application<'a> {
     }
 
     fn read_suites(&mut self) -> ApplicationResult<()> {
-        for path in self.config.suites() {
-            let reader = File::open(path).map_err(ApplicationError::suite_io_error)?;
-            let suite =
-                serde_yaml::from_reader(reader).map_err(ApplicationError::suite_yaml_error)?;
+        let mut reader = SuiteReader::default();
+        reader.read(self.config.suites(), self.config.recursive())?;
 
-            self.suites.push(suite);
-        }
+        self.suites.extend(reader.suites());
 
         Ok(())
     }

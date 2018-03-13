@@ -101,7 +101,6 @@ where
 mod test {
     use serde_yaml;
 
-    use dto::ColumnClause;
     use dto::NRowsClause;
 
     use super::assert_n_rows;
