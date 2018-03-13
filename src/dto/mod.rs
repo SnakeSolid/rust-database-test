@@ -1,12 +1,3 @@
-macro_rules! to_option_ref {
-    ($e : expr) => {
-        match $e {
-            Some(ref value) => Some(value),
-            None => None,
-        }
-    }
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum Condition {
     #[serde(rename = "=")] Equal,
@@ -64,16 +55,16 @@ pub struct TestSuite {
 }
 
 impl TestSuite {
-    pub fn name(&self) -> &str {
+    pub fn name(&self) -> &String {
         &self.name
     }
 
-    pub fn description(&self) -> Option<&str> {
-        to_option_ref!(self.description)
+    pub fn description(&self) -> Option<&String> {
+        self.description.as_ref()
     }
 
     pub fn skip(&self) -> Option<&QueryClause> {
-        to_option_ref!(self.skip)
+        self.skip.as_ref()
     }
 
     pub fn cases(&self) -> &Vec<TestCase> {
@@ -82,24 +73,24 @@ impl TestSuite {
 }
 
 impl TestCase {
-    pub fn name(&self) -> &str {
+    pub fn name(&self) -> &String {
         &self.name
     }
 
-    pub fn description(&self) -> Option<&str> {
-        to_option_ref!(self.description)
+    pub fn description(&self) -> Option<&String> {
+        self.description.as_ref()
     }
 
     pub fn skip(&self) -> Option<&QueryClause> {
-        to_option_ref!(self.skip)
+        self.skip.as_ref()
     }
 
-    pub fn query(&self) -> &str {
+    pub fn query(&self) -> &String {
         &self.query
     }
 
     pub fn n_rows(&self) -> Option<&NRowsClause> {
-        to_option_ref!(self.n_rows)
+        self.n_rows.as_ref()
     }
 
     pub fn columns(&self) -> &Vec<ColumnClause> {
@@ -108,7 +99,7 @@ impl TestCase {
 }
 
 impl QueryClause {
-    pub fn query(&self) -> &str {
+    pub fn query(&self) -> &String {
         &self.query
     }
 
@@ -132,7 +123,7 @@ impl ColumnClause {
         self.condition.clone()
     }
 
-    pub fn name(&self) -> &str {
+    pub fn name(&self) -> &String {
         &self.name
     }
 

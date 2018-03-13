@@ -29,7 +29,7 @@ pub struct Configuration {
 }
 
 impl Configuration {
-    pub fn from_matches<'a>(matches: ArgMatches<'a>) -> ConfigurationResult<Configuration> {
+    pub fn from_matches(matches: ArgMatches) -> ConfigurationResult<Configuration> {
         Ok(Configuration {
             hostname: matches
                 .value_of(HOSTNAME)

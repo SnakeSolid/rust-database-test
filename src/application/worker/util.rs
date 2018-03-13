@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use std::fmt::Display;
 
 use postgres::Result as PgResult;
@@ -36,7 +37,7 @@ where
     T: FromSql + PartialEq + PartialOrd + Display,
 {
     let condition = column.condition();
-    let name = column.name();
+    let name: &str = column.name().borrow();
     let actual_value: Option<PgResult<T>> = row.get_opt(name);
 
     match actual_value {

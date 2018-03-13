@@ -12,13 +12,13 @@ pub struct PlainFormatter {
 
 impl Formatter for PlainFormatter {
     fn header(&self) {
-        println!("");
+        println!();
         println!("running tests...");
-        println!("");
+        println!();
     }
 
     fn footer(&self) {
-        println!("");
+        println!();
         print!("test result: ");
 
         if self.tests_passed == 0 && self.tests_failed == 0 {
@@ -33,12 +33,12 @@ impl Formatter for PlainFormatter {
             ". {} passed; {} failed; {} skipped",
             self.tests_passed, self.tests_failed, self.tests_skipped
         );
-        println!("");
+        println!();
     }
 
     fn case_passed(&mut self, suite: &TestSuite, case: &TestCase) {
-        let suite_name = suite.description().unwrap_or(suite.name());
-        let case_name = case.description().unwrap_or(case.name());
+        let suite_name = suite.description().unwrap_or_else(|| suite.name());
+        let case_name = case.description().unwrap_or_else(|| case.name());
 
         println!("  * {}::{} .. passed", suite_name, case_name);
 
@@ -46,8 +46,8 @@ impl Formatter for PlainFormatter {
     }
 
     fn case_failed(&mut self, suite: &TestSuite, case: &TestCase, message: &str) {
-        let suite_name = suite.description().unwrap_or(suite.name());
-        let case_name = case.description().unwrap_or(case.name());
+        let suite_name = suite.description().unwrap_or_else(|| suite.name());
+        let case_name = case.description().unwrap_or_else(|| case.name());
 
         println!("  * {}::{} .. failed", suite_name, case_name);
         println!("    - {}", message);
@@ -56,8 +56,8 @@ impl Formatter for PlainFormatter {
     }
 
     fn case_skipped(&mut self, suite: &TestSuite, case: &TestCase) {
-        let suite_name = suite.description().unwrap_or(suite.name());
-        let case_name = case.description().unwrap_or(case.name());
+        let suite_name = suite.description().unwrap_or_else(|| suite.name());
+        let case_name = case.description().unwrap_or_else(|| case.name());
 
         println!("  * {}::{} .. skipped", suite_name, case_name);
 
@@ -65,13 +65,13 @@ impl Formatter for PlainFormatter {
     }
 
     fn suite_started(&mut self, suite: &TestSuite) {
-        let suite_name = suite.description().unwrap_or(suite.name());
+        let suite_name = suite.description().unwrap_or_else(|| suite.name());
 
         println!("* {} .. started", suite_name);
     }
 
     fn suite_skipped(&mut self, suite: &TestSuite) {
-        let suite_name = suite.description().unwrap_or(suite.name());
+        let suite_name = suite.description().unwrap_or_else(|| suite.name());
 
         println!("* {} .. skipped", suite_name);
 
@@ -79,7 +79,7 @@ impl Formatter for PlainFormatter {
     }
 
     fn suite_error(&mut self, suite: &TestSuite, message: &str) {
-        let suite_name = suite.description().unwrap_or(suite.name());
+        let suite_name = suite.description().unwrap_or_else(|| suite.name());
 
         println!("* {} .. error", suite_name);
         println!("  - {}", message);

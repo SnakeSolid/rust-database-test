@@ -21,13 +21,13 @@ pub struct ColorFormatter {
 
 impl Formatter for ColorFormatter {
     fn header(&self) {
-        println!("");
+        println!();
         println!("running tests...");
-        println!("");
+        println!();
     }
 
     fn footer(&self) {
-        println!("");
+        println!();
         print!("test result: ");
 
         if self.tests_passed == 0 && self.tests_failed == 0 {
@@ -42,12 +42,12 @@ impl Formatter for ColorFormatter {
             ". {} passed; {} failed; {} skipped",
             self.tests_passed, self.tests_failed, self.tests_skipped
         );
-        println!("");
+        println!();
     }
 
     fn case_passed(&mut self, suite: &TestSuite, case: &TestCase) {
-        let suite_name = suite.description().unwrap_or(suite.name());
-        let case_name = case.description().unwrap_or(case.name());
+        let suite_name = suite.description().unwrap_or_else(|| suite.name());
+        let case_name = case.description().unwrap_or_else(|| case.name());
 
         print!("  * {}::{} .. ", suite_name, case_name);
         println_with_color(GREEN, "passed");
@@ -56,8 +56,8 @@ impl Formatter for ColorFormatter {
     }
 
     fn case_failed(&mut self, suite: &TestSuite, case: &TestCase, message: &str) {
-        let suite_name = suite.description().unwrap_or(suite.name());
-        let case_name = case.description().unwrap_or(case.name());
+        let suite_name = suite.description().unwrap_or_else(|| suite.name());
+        let case_name = case.description().unwrap_or_else(|| case.name());
 
         print!("  * {}::{} .. ", suite_name, case_name);
         println_with_color(RED, "failed");
@@ -67,8 +67,8 @@ impl Formatter for ColorFormatter {
     }
 
     fn case_skipped(&mut self, suite: &TestSuite, case: &TestCase) {
-        let suite_name = suite.description().unwrap_or(suite.name());
-        let case_name = case.description().unwrap_or(case.name());
+        let suite_name = suite.description().unwrap_or_else(|| suite.name());
+        let case_name = case.description().unwrap_or_else(|| case.name());
 
         print!("  * {}::{} .. ", suite_name, case_name);
         println_with_color(YELLOW, "skipped");
@@ -77,13 +77,13 @@ impl Formatter for ColorFormatter {
     }
 
     fn suite_started(&mut self, suite: &TestSuite) {
-        let suite_name = suite.description().unwrap_or(suite.name());
+        let suite_name = suite.description().unwrap_or_else(|| suite.name());
 
         println!("* {} .. started", suite_name);
     }
 
     fn suite_skipped(&mut self, suite: &TestSuite) {
-        let suite_name = suite.description().unwrap_or(suite.name());
+        let suite_name = suite.description().unwrap_or_else(|| suite.name());
 
         print!("* {} .. ", suite_name);
         println_with_color(YELLOW, "skipped");
@@ -92,7 +92,7 @@ impl Formatter for ColorFormatter {
     }
 
     fn suite_error(&mut self, suite: &TestSuite, message: &str) {
-        let suite_name = suite.description().unwrap_or(suite.name());
+        let suite_name = suite.description().unwrap_or_else(|| suite.name());
 
         print!("* {} .. ", suite_name);
         println_with_color(RED, "error");
@@ -133,14 +133,15 @@ fn print_with_color(color: Color, value: &str) {
 }
 
 fn println_with_color(color: Color, value: &str) {
-    if let Err(_) = try_terminal(|f| {
+    if try_terminal(|f| {
         f.fg(color)?;
         write!(f, "{}", value)?;
         f.reset()?;
         writeln!(f, "")?;
 
         Ok(())
-    }) {
+    }).is_err()
+    {
         println!("{}", value);
     }
 }

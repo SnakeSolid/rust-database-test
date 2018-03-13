@@ -81,12 +81,7 @@ impl Worker {
     }
 
     fn run(self, connection: Connection) {
-        loop {
-            let message = match self.next_message() {
-                Ok(message) => message,
-                Err(_) => break,
-            };
-
+        while let Ok(message) = self.next_message() {
             match message {
                 WorkerMessage::SuiteSkip {
                     suite_index,
