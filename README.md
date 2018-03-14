@@ -21,10 +21,14 @@ Optional arguments:
 * `-u` (`--user-name`) USERNAME: PostgreSQL user name;
 * `-w` (`--password`) PASSWORD: PostgreSQL password;
 * `-d` (`--database`) DATABASE: PostgreSQL database;
+* `-r` (`--recursive`): Read all files under each directory, recursively;
+* `-e` (`--extensions`) EXTENSIONS: File extension filters for recursive search;
 * `-t` (`--text-mode`): Use plain text mode instead of color.
 * `-n` (`--n-workers`) NWORKERS: Number of worker threads, default value - 4.
 
 Also all possible arguments can be shown with `--help` option.
+
+Extension filters used only for recursive directory processing. If parameter is file, it will be processed regardless its extension.
 
 ## Exit code
 
