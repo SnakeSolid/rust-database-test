@@ -133,15 +133,16 @@ fn print_with_color(color: Color, value: &str) {
 }
 
 fn println_with_color(color: Color, value: &str) {
-    if try_terminal(|f| {
+    let result = try_terminal(|f| {
         f.fg(color)?;
         write!(f, "{}", value)?;
         f.reset()?;
         writeln!(f, "")?;
 
         Ok(())
-    }).is_err()
-    {
+    });
+
+    if result.is_err() {
         println!("{}", value);
     }
 }
