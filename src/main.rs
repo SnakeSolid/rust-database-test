@@ -24,6 +24,7 @@ use application::Formatter;
 use application::PlainFormatter;
 use config::Configuration;
 use config::DATABASE;
+use config::EXTENSIONS;
 use config::HOSTNAME;
 use config::NWORKERS;
 use config::PASSWORD;
@@ -118,11 +119,19 @@ fn start_app() -> ApplicationResult<ApplicationStatus> {
                 .display_order(7),
         )
         .arg(
+            Arg::with_name(EXTENSIONS)
+                .short("e")
+                .multiple(true)
+                .value_name("EXTENSIONS")
+                .help("File extension filter for recursive search")
+                .display_order(8),
+        )
+        .arg(
             Arg::with_name(TEXTMODE)
                 .short("t")
                 .long("text-mode")
                 .help("Use plain text mode instead of color")
-                .display_order(8),
+                .display_order(9),
         )
         .arg(
             Arg::with_name(SUITES)

@@ -187,10 +187,18 @@ impl<'a> Application<'a> {
 
     fn read_suites(&mut self) -> ApplicationResult<()> {
         let mut reader = SuiteReader::default();
-        reader.read(self.config.suites(), self.config.recursive())?;
+        reader.read(
+            self.config.suites(),
+            self.config.recursive(),
+            self.config.extensions(),
+        )?;
 
         self.suites.extend(reader.suites());
 
-        Ok(())
+        if self.suites.is_empty() {
+            Err(ApplicationError::no_suites_found())
+        } else {
+            Ok(())
+        }
     }
 }

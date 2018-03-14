@@ -12,6 +12,7 @@ pub const USERNAME: &str = "USERNAME";
 pub const PASSWORD: &str = "PASSWORD";
 pub const NWORKERS: &str = "NWORKERS";
 pub const RECURSIVE: &str = "RECURSIVE";
+pub const EXTENSIONS: &str = "EXTENSIONS";
 pub const TEXTMODE: &str = "TEXTMODE";
 pub const SUITES: &str = "SUITES";
 
@@ -24,6 +25,7 @@ pub struct Configuration {
     password: String,
     n_workers: usize,
     recursive: bool,
+    extensions: Option<Vec<String>>,
     text_mode: bool,
     suites: Vec<PathBuf>,
 }
@@ -58,6 +60,9 @@ impl Configuration {
                 .parse()
                 .map_err(ConfigurationError::wrong_n_workers)?,
             recursive: matches.is_present(RECURSIVE),
+            extensions: matches
+                .values_of(EXTENSIONS)
+                .map(|values| values.map(|value| value.into()).collect()),
             text_mode: matches.is_present(TEXTMODE),
             suites: matches
                 .values_of(SUITES)
@@ -93,6 +98,10 @@ impl Configuration {
 
     pub fn recursive(&self) -> bool {
         self.recursive
+    }
+
+    pub fn extensions(&self) -> Option<&Vec<String>> {
+        self.extensions.as_ref()
     }
 
     pub fn text_mode(&self) -> bool {

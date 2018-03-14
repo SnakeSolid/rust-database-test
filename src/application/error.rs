@@ -18,6 +18,7 @@ pub enum ApplicationError {
     SuiteYamlError { message: String },
     SuiteIsDirectory { path: PathBuf },
     DirectoryIoError { message: String },
+    NoSuitesFound,
     SendMessageError,
     WorkerError { message: String },
 }
@@ -48,6 +49,10 @@ impl ApplicationError {
         }
     }
 
+    pub fn no_suites_found() -> ApplicationError {
+        ApplicationError::NoSuitesFound
+    }
+
     pub fn send_message_error<T>(_: SendError<T>) -> ApplicationError {
         ApplicationError::SendMessageError
     }
@@ -72,6 +77,7 @@ impl Display for ApplicationError {
             ApplicationError::DirectoryIoError { ref message } => {
                 write!(f, "IO error - {}", message)
             }
+            ApplicationError::NoSuitesFound => write!(f, "No suites found"),
             ApplicationError::SendMessageError => write!(f, "Send error, channel already closed"),
             ApplicationError::WorkerError { ref message } => {
                 write!(f, "Worker error - {}", message)
@@ -87,6 +93,7 @@ impl Error for ApplicationError {
             ApplicationError::SuiteYamlError { .. } => "Suite YAML error",
             ApplicationError::SuiteIsDirectory { .. } => "Suite is directory",
             ApplicationError::DirectoryIoError { .. } => "Directory IO error",
+            ApplicationError::NoSuitesFound => "No suites found",
             ApplicationError::SendMessageError => "Send message error",
             ApplicationError::WorkerError { .. } => "Worker error",
         }
