@@ -121,6 +121,7 @@ fn start_app() -> ApplicationResult<ApplicationStatus> {
         .arg(
             Arg::with_name(EXTENSIONS)
                 .short("e")
+                .long("extensions")
                 .multiple(true)
                 .value_name("EXTENSIONS")
                 .help("File extension filter for recursive search")
