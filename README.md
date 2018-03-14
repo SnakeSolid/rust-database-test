@@ -4,7 +4,7 @@ PostgreSQL database consistency test tool. Provides simple commend line interfac
 
 Queries are defined in test suites. Every suite represented with single YAML file.
 
-For using in automated testing the application returns different exit codes, see Exit code section.
+For using in automated testing the application returns different exit codes, see [Exit code](#markdown-header-exit-code) section.
 
 ## Usage
 
@@ -46,15 +46,15 @@ Test suite fields:
 
 * `name`: string, name of this test case. Will be shown in execution log;
 * `description`: optional string, description of test suite will be shown instead of name if given;
-* `skip`: optional object, if defined will be used to check suite to be skipped (see Skip section below);
-* `cases`: array of object, every object represents single test case (see Test Case section).
+* `skip`: optional object, if defined will be used to check suite to be skipped (see [Skip](#markdown-header-skip) section below);
+* `cases`: array of object, every object represents single test case (see [Test Case](#markdown-header-test-case) section).
 
 ## Skip
 
 Skip clause contains only two fields:
 
 * `query`: string, query to execute;
-* `n_rows`: object, contains criterion to check query result (see N Rows section).
+* `n_rows`: object, contains criterion to check query result (see [N Rows](#markdown-header-n-rows) section).
 
 If query result successfully passed check - a suite and all its test will be skipped. Otherwise all tests will start.
 
@@ -74,8 +74,8 @@ Represents single test case. Every test case can be skipped like test suite. Tes
 * `name`: string, test case name;
 * `description`: optional string, description of test suite will be shown instead of name if given;
 * `query`: string, query to execute for this test case;
-* `n_rows`: optional object, if defined will be used to check number of rows in result set (see Skip section);
-* `columns`: optional object, if defined will be used to check column values of every row in result set (see Columns section);
+* `n_rows`: optional object, if defined will be used to check number of rows in result set (see [Skip](#markdown-header-skip) section);
+* `columns`: optional object, if defined will be used to check column values of every row in result set (see [Columns](#markdown-header-columns) section);
 
 ## Columns
 
