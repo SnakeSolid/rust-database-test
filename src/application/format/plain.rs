@@ -84,7 +84,7 @@ impl Formatter for PlainFormatter {
         println!("* {} .. error", suite_name);
         println!("  - {}", message);
 
-        self.tests_skipped += suite.cases().len();
+        self.tests_failed += suite.cases().len();
     }
 }
 

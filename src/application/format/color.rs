@@ -98,7 +98,7 @@ impl Formatter for ColorFormatter {
         println_with_color(RED, "error");
         println!("  - {}", message);
 
-        self.tests_skipped += suite.cases().len();
+        self.tests_failed += suite.cases().len();
     }
 }
 
