@@ -17,16 +17,36 @@ pub enum Value {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct NRowsClause {
-    condition: Condition,
-    value: usize,
+#[serde(untagged)]
+pub enum Values {
+    Integer(Vec<i64>),
+    Float(Vec<f64>),
+    String(Vec<String>),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ColumnClause {
+#[serde(untagged)]
+pub enum ColumnClause {
+    Compare {
+        condition: Condition,
+        name: String,
+        value: Value,
+    },
+    Range {
+        name: String,
+        start: Value,
+        end: Value,
+    },
+    Any {
+        name: String,
+        any: Values,
+    },
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct NRowsClause {
     condition: Condition,
-    name: String,
-    value: Value,
+    value: usize,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -115,19 +135,5 @@ impl NRowsClause {
 
     pub fn value(&self) -> usize {
         self.value
-    }
-}
-
-impl ColumnClause {
-    pub fn condition(&self) -> Condition {
-        self.condition.clone()
-    }
-
-    pub fn name(&self) -> &String {
-        &self.name
-    }
-
-    pub fn value(&self) -> &Value {
-        &self.value
     }
 }
