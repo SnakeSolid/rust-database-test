@@ -79,16 +79,46 @@ Represents single test case. Every test case can be skipped like test suite. Tes
 
 ## Columns
 
-Defines criterion to check values of every row in query result set. Contains three required fields:
-
-* `condition`: string, condition to compare actual and expected number of rows. Can be one of [=, !=, <, >, <=, >=];
-* `name`: string, column name to test.
-* `value`: integer, value to compare actual data with. Can be integer, float or string.
+Defines criterion to check values of every row in query result set. This object may be [simple condition](#markdown-header-condition), [range check](#markdown-header-range), [any value check](#markdown-header-any) or [substring check](#markdown-header-contains).
 
 Every row of query result set will be tested of this condition. If at least one row failed the test - whole test case will fail.
 
-Value can be compared only with BIGINT (integer value), DOUBLE PRECISION (float value), VARCHAR (string value). If some column has different type it can be converted to one of these type using ::, `CAST` or `CONVERT` SQL functions. Example:
+Value can be compared only with BIGINT/INT8 (integer value), DOUBLE PRECISION/FLOAT8 (float value), VARCHAR/CHAR (string value). If some column has different type it can be converted to one of these type using `::`, `CAST` or `CONVERT` SQL functions. Example:
 
 ```sql
 SELECT 1::INT8 AS integer_column, 1::FLOAT8 AS float_column;
 ```
+
+### Condition
+
+Simple condition has three required fields:
+
+* `name`: string, column name to test;
+* `condition`: string, condition to compare actual and expected number of rows. Can be one of [`=`, `!=`, `<`, `>`, `<=`, `>=`];
+* `value`: integer/float/string, value to compare actual data with.
+
+### Range
+
+Range check has three required fields:
+
+* `name`: string, column name to test;
+* `from`: integer/float/string, represents minimal value for column;
+* `to`: integer/float/string, represents maximal value for column.
+
+The values of `from` and `to` must be same.
+
+### Any
+
+Any check has two required fields:
+
+* `name`: string, column name to test;
+* `any`: array of values. Can be integer, float or string.
+
+Value of column will be compared with all values in `any` parameter. Match success if at least one value equals to actual value.
+
+### Contains
+
+Contains check has two required fields:
+
+* `name`: string, column name to test;
+* `contains`: string, substring to search in actual value.
