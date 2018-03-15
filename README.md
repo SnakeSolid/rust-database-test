@@ -23,7 +23,8 @@ Optional arguments:
 * `-d` (`--database`) DATABASE: PostgreSQL database;
 * `-r` (`--recursive`): Read all files under each directory, recursively;
 * `-e` (`--extensions`) EXTENSIONS: File extension filters for recursive search;
-* `-t` (`--text-mode`): Use plain text mode instead of color.
+* `-f` (`--filter`) FILTER: Filter test suite by suite name;
+* `-t` (`--text-mode`): Use plain text mode instead of color;
 * `-n` (`--n-workers`) NWORKERS: Number of worker threads, default value - 4.
 
 Also all possible arguments can be shown with `--help` option.
