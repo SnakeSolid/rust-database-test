@@ -16,15 +16,15 @@ use super::QueryResult;
 pub fn assert_column(row: &Row, column: &ColumnClause) -> QueryResult {
     match *column {
         ColumnClause::Compare {
-            condition,
             ref name,
+            condition,
             ref value,
         } => assert_column_compare(row, condition, name, value),
         ColumnClause::Range {
             ref name,
-            ref start,
-            ref end,
-        } => assert_column_range(row, name, start, end),
+            ref from,
+            ref to,
+        } => assert_column_range(row, name, from, to),
         ColumnClause::Any { ref name, ref any } => assert_column_any(row, name, any),
     }
 }
@@ -87,32 +87,32 @@ where
 }
 
 #[inline]
-fn assert_column_range(row: &Row, name: &str, start: &Value, end: &Value) -> QueryResult {
-    match (start, end) {
-        (&Value::Integer(ref start), &Value::Integer(ref end)) => {
-            with_row_value(row, name, |actual| assert_range(name, start, end, actual))
+fn assert_column_range(row: &Row, name: &str, from: &Value, to: &Value) -> QueryResult {
+    match (from, to) {
+        (&Value::Integer(ref from), &Value::Integer(ref to)) => {
+            with_row_value(row, name, |actual| assert_range(name, from, to, actual))
         }
-        (&Value::Float(ref start), &Value::Float(ref end)) => {
-            with_row_value(row, name, |actual| assert_range(name, start, end, actual))
+        (&Value::Float(ref from), &Value::Float(ref to)) => {
+            with_row_value(row, name, |actual| assert_range(name, from, to, actual))
         }
-        (&Value::String(ref start), &Value::String(ref end)) => {
-            with_row_value(row, name, |actual| assert_range(name, start, end, actual))
+        (&Value::String(ref from), &Value::String(ref to)) => {
+            with_row_value(row, name, |actual| assert_range(name, from, to, actual))
         }
-        _ => QueryResult::fail("Parameters 'start' and 'end' have incompatible types"),
+        _ => QueryResult::fail("Parameters 'from' and 'to' have incompatible types"),
     }
 }
 
 #[inline]
-fn assert_range<S, T>(name: S, start: T, end: T, actual: T) -> QueryResult
+fn assert_range<S, T>(name: S, from: T, to: T, actual: T) -> QueryResult
 where
     S: Display,
     T: PartialOrd + Display,
 {
     make_query_result(
-        actual >= start && actual <= end,
+        actual >= from && actual <= to,
         format!(
             "Column '{}' failed: {} in [ {} .. {} ]",
-            name, actual, start, end
+            name, actual, from, to
         ),
     )
 }

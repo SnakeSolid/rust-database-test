@@ -28,14 +28,14 @@ pub enum Values {
 #[serde(untagged)]
 pub enum ColumnClause {
     Compare {
-        condition: Condition,
         name: String,
+        condition: Condition,
         value: Value,
     },
     Range {
         name: String,
-        start: Value,
-        end: Value,
+        from: Value,
+        to: Value,
     },
     Any {
         name: String,
