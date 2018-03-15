@@ -1,4 +1,4 @@
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum Condition {
     #[serde(rename = "=")] Equal,
     #[serde(rename = "!=")] NotEqual,
