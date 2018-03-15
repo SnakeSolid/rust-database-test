@@ -26,6 +26,10 @@ pub fn assert_column(row: &Row, column: &ColumnClause) -> QueryResult {
             ref to,
         } => assert_column_range(row, name, from, to),
         ColumnClause::Any { ref name, ref any } => assert_column_any(row, name, any),
+        ColumnClause::Contains {
+            ref name,
+            ref contains,
+        } => assert_column_contains(row, name, contains),
     }
 }
 
@@ -167,6 +171,25 @@ where
     }
 
     result
+}
+
+#[inline]
+fn assert_column_contains(row: &Row, name: &str, sub_string: &String) -> QueryResult {
+    with_row_value(row, name, |value| assert_contains(name, value, sub_string))
+}
+
+#[inline]
+fn assert_contains<S>(name: S, value: &String, sub_string: &String) -> QueryResult
+where
+    S: Display,
+{
+    make_query_result(
+        value.contains(sub_string),
+        format!(
+            "Column '{}' failed: '{}' contains '{}'",
+            name, value, sub_string
+        ),
+    )
 }
 
 #[inline]

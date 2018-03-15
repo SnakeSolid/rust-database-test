@@ -41,6 +41,10 @@ pub enum ColumnClause {
         name: String,
         any: Values,
     },
+    Contains {
+        name: String,
+        contains: String,
+    },
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
