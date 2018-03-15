@@ -25,6 +25,7 @@ use application::PlainFormatter;
 use config::Configuration;
 use config::DATABASE;
 use config::EXTENSIONS;
+use config::FILTER;
 use config::HOSTNAME;
 use config::NWORKERS;
 use config::PASSWORD;
@@ -128,11 +129,20 @@ fn start_app() -> ApplicationResult<ApplicationStatus> {
                 .display_order(8),
         )
         .arg(
+            Arg::with_name(FILTER)
+                .short("f")
+                .long("filter")
+                .takes_value(true)
+                .value_name("FILTER")
+                .help("Filter test suites by name")
+                .display_order(9),
+        )
+        .arg(
             Arg::with_name(TEXTMODE)
                 .short("t")
                 .long("text-mode")
                 .help("Use plain text mode instead of color")
-                .display_order(9),
+                .display_order(10),
         )
         .arg(
             Arg::with_name(SUITES)

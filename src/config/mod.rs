@@ -15,6 +15,7 @@ pub const PASSWORD: &str = "PASSWORD";
 pub const NWORKERS: &str = "NWORKERS";
 pub const RECURSIVE: &str = "RECURSIVE";
 pub const EXTENSIONS: &str = "EXTENSIONS";
+pub const FILTER: &str = "FILTER";
 pub const TEXTMODE: &str = "TEXTMODE";
 pub const SUITES: &str = "SUITES";
 
@@ -28,6 +29,7 @@ pub struct Configuration {
     n_workers: usize,
     recursive: bool,
     extensions: Option<Vec<String>>,
+    filter: Option<String>,
     text_mode: bool,
     suites: Vec<PathBuf>,
 }
@@ -65,6 +67,7 @@ impl Configuration {
             extensions: matches
                 .values_of(EXTENSIONS)
                 .map(|values| values.map(|value| value.into()).collect()),
+            filter: matches.value_of(FILTER).map(|value| value.into()),
             text_mode: matches.is_present(TEXTMODE),
             suites: matches
                 .values_of(SUITES)
@@ -104,6 +107,10 @@ impl Configuration {
 
     pub fn extensions(&self) -> Option<&Vec<String>> {
         self.extensions.as_ref()
+    }
+
+    pub fn filter(&self) -> Option<&String> {
+        self.filter.as_ref()
     }
 
     pub fn text_mode(&self) -> bool {

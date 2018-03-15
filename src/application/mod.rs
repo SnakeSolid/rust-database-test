@@ -199,6 +199,7 @@ impl<'a> Application<'a> {
         let mut reader = SuiteReader::default();
         reader.read(
             self.config.suites(),
+            self.config.filter(),
             self.config.recursive(),
             self.config.extensions(),
         )?;
