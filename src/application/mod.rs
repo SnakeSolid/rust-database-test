@@ -61,6 +61,8 @@ impl<'a> Application<'a> {
             if let Some(skip) = suite.skip() {
                 bus.send_suite_skip(suite_index, skip)?;
             } else {
+                self.formatter.suite_started(suite);
+
                 bus.send_suite(suite_index, suite)?;
             }
         }
