@@ -25,11 +25,15 @@ Optional arguments:
 * `-e` (`--extensions`) EXTENSIONS: File extension filters for recursive search;
 * `-f` (`--filter`) FILTER: Filter test suite by suite name;
 * `-t` (`--text-mode`): Use plain text mode instead of color;
-* `-n` (`--n-workers`) NWORKERS: Number of worker threads, default value - 4.
+* `-n` (`--n-workers`) NWORKERS: Number of worker threads, default value - 4;
+* `-v` (`--verbose`): Be verbose, can be applied two times;
+* `-q` (`--quiet`): Be quiet, can be applied three times.
 
 Also all possible arguments can be shown with `--help` option.
 
 Extension filters used only for recursive directory processing. If parameter is file, it will be processed regardless its extension.
+
+By default shown only failed and passed test, and test results. See [Verbosity](#markdown-header-verbosity) section for details.
 
 ## Exit code
 
@@ -38,6 +42,17 @@ The application returns exit code for automated testing. There are three possibl
 * `0` - all tests passed or skipped, no failed tests;
 * `1` - at least one test failed;
 * `2` - error occurred during startup (server refused connection, malformed YAML, etc).
+
+## Verbosity
+
+There are five verbosity levels. By default only passed and failed tests, and test result will be shown. This behavior can be changed using `-v` and `-q` arguments. Possible argument combinations:
+
+* `-qqq` - no output, only status code will show testing result;
+* `-qq` - show test results;
+* `-q` - show failed tests and test results;
+* no options - show failed and passed tests, and test results;
+* `-v` - show failed, passed and skipped tests, and test results;
+* `-vv` - show all possible output including starting test suites.
 
 ## Test suite file
 
