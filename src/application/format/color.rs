@@ -49,7 +49,7 @@ impl Formatter for ColorFormatter {
         let suite_name = suite.description().unwrap_or_else(|| suite.name());
         let case_name = case.description().unwrap_or_else(|| case.name());
 
-        print!("  * {}::{} .. ", suite_name, case_name);
+        print!("test {}::{} .. ", suite_name, case_name);
         println_with_color(GREEN, "passed");
 
         self.tests_passed += 1;
@@ -59,7 +59,7 @@ impl Formatter for ColorFormatter {
         let suite_name = suite.description().unwrap_or_else(|| suite.name());
         let case_name = case.description().unwrap_or_else(|| case.name());
 
-        print!("  * {}::{} .. ", suite_name, case_name);
+        print!("test {}::{} .. ", suite_name, case_name);
         println_with_color(RED, "failed");
         println!("    - {}", message);
 
@@ -70,7 +70,7 @@ impl Formatter for ColorFormatter {
         let suite_name = suite.description().unwrap_or_else(|| suite.name());
         let case_name = case.description().unwrap_or_else(|| case.name());
 
-        print!("  * {}::{} .. ", suite_name, case_name);
+        print!("test {}::{} .. ", suite_name, case_name);
         println_with_color(YELLOW, "skipped");
 
         self.tests_skipped += 1;
@@ -79,13 +79,13 @@ impl Formatter for ColorFormatter {
     fn suite_started(&mut self, suite: &TestSuite) {
         let suite_name = suite.description().unwrap_or_else(|| suite.name());
 
-        println!("* {} .. started", suite_name);
+        println!("suite {} .. started", suite_name);
     }
 
     fn suite_skipped(&mut self, suite: &TestSuite) {
         let suite_name = suite.description().unwrap_or_else(|| suite.name());
 
-        print!("* {} .. ", suite_name);
+        print!("suite {} .. ", suite_name);
         println_with_color(YELLOW, "skipped");
 
         self.tests_skipped += suite.cases().len();
@@ -94,7 +94,7 @@ impl Formatter for ColorFormatter {
     fn suite_error(&mut self, suite: &TestSuite, message: &str) {
         let suite_name = suite.description().unwrap_or_else(|| suite.name());
 
-        print!("* {} .. ", suite_name);
+        print!("suite {} .. ", suite_name);
         println_with_color(RED, "error");
         println!("  - {}", message);
 

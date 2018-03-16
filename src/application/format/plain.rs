@@ -40,7 +40,7 @@ impl Formatter for PlainFormatter {
         let suite_name = suite.description().unwrap_or_else(|| suite.name());
         let case_name = case.description().unwrap_or_else(|| case.name());
 
-        println!("  * {}::{} .. passed", suite_name, case_name);
+        println!("test {}::{} .. passed", suite_name, case_name);
 
         self.tests_passed += 1;
     }
@@ -49,7 +49,7 @@ impl Formatter for PlainFormatter {
         let suite_name = suite.description().unwrap_or_else(|| suite.name());
         let case_name = case.description().unwrap_or_else(|| case.name());
 
-        println!("  * {}::{} .. failed", suite_name, case_name);
+        println!("test {}::{} .. failed", suite_name, case_name);
         println!("    - {}", message);
 
         self.tests_failed += 1;
@@ -59,7 +59,7 @@ impl Formatter for PlainFormatter {
         let suite_name = suite.description().unwrap_or_else(|| suite.name());
         let case_name = case.description().unwrap_or_else(|| case.name());
 
-        println!("  * {}::{} .. skipped", suite_name, case_name);
+        println!("test {}::{} .. skipped", suite_name, case_name);
 
         self.tests_skipped += 1;
     }
@@ -67,13 +67,13 @@ impl Formatter for PlainFormatter {
     fn suite_started(&mut self, suite: &TestSuite) {
         let suite_name = suite.description().unwrap_or_else(|| suite.name());
 
-        println!("* {} .. started", suite_name);
+        println!("suite {} .. started", suite_name);
     }
 
     fn suite_skipped(&mut self, suite: &TestSuite) {
         let suite_name = suite.description().unwrap_or_else(|| suite.name());
 
-        println!("* {} .. skipped", suite_name);
+        println!("suite {} .. skipped", suite_name);
 
         self.tests_skipped += suite.cases().len();
     }
@@ -81,7 +81,7 @@ impl Formatter for PlainFormatter {
     fn suite_error(&mut self, suite: &TestSuite, message: &str) {
         let suite_name = suite.description().unwrap_or_else(|| suite.name());
 
-        println!("* {} .. error", suite_name);
+        println!("suite {} .. error", suite_name);
         println!("  - {}", message);
 
         self.tests_failed += suite.cases().len();
