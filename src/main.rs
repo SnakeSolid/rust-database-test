@@ -19,9 +19,6 @@ mod validate;
 use application::Application;
 use application::ApplicationResult;
 use application::ApplicationStatus;
-use application::ColorFormatter;
-use application::Formatter;
-use application::PlainFormatter;
 use config::Configuration;
 use config::DATABASE;
 use config::EXTENSIONS;
@@ -159,12 +156,7 @@ fn start_app() -> ApplicationResult<ApplicationStatus> {
         Ok(config) => config,
         Err(err) => panic!("{}", err),
     };
-    let mut formatter: Box<Formatter> = if config.text_mode() {
-        Box::new(PlainFormatter::default())
-    } else {
-        Box::new(ColorFormatter::default())
-    };
-    let result = Application::new(&config, formatter.as_mut()).run();
+    let result = Application::new(&config).run();
 
     if let Err(ref err) = result {
         println!("{}", err);

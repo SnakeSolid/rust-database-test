@@ -10,16 +10,14 @@ use dto::TestSuite;
 
 mod bus;
 mod error;
-mod format;
+mod output;
 mod read;
 mod status;
 mod worker;
 
 pub use self::error::ApplicationError;
 pub use self::error::ApplicationResult;
-pub use self::format::ColorFormatter;
-pub use self::format::Formatter;
-pub use self::format::PlainFormatter;
+pub use self::output::Output;
 pub use self::read::SuiteReader;
 pub use self::status::ApplicationStatus;
 
@@ -31,16 +29,16 @@ use self::worker::WorkerReply;
 
 pub struct Application<'a> {
     config: &'a Configuration,
-    formatter: &'a mut Formatter,
+    output: Box<Output>,
     suites: Vec<TestSuite>,
     status: ApplicationStatus,
 }
 
 impl<'a> Application<'a> {
-    pub fn new(config: &'a Configuration, formatter: &'a mut Formatter) -> Application<'a> {
+    pub fn new(config: &'a Configuration) -> Application<'a> {
         Application {
             config,
-            formatter,
+            output: output::create_output(config.text_mode(), 0),
             suites: Vec::default(),
             status: ApplicationStatus::Success,
         }
@@ -55,13 +53,13 @@ impl<'a> Application<'a> {
         let bus = MessageBus::new(message_sender, reply_receiver);
         let workers = self.spawn_workers(message_receiver, reply_sender)?;
 
-        self.formatter.header();
+        self.output.header();
 
         for (suite_index, suite) in self.suites.iter().enumerate() {
             if let Some(skip) = suite.skip() {
                 bus.send_suite_skip(suite_index, skip)?;
             } else {
-                self.formatter.suite_started(suite);
+                self.output.suite_started(suite);
 
                 bus.send_suite(suite_index, suite)?;
             }
@@ -84,7 +82,7 @@ impl<'a> Application<'a> {
             } => self.on_case_run(suite_index, case_index, result),
         })?;
 
-        self.formatter.footer();
+        self.output.footer();
         self.join_workers(workers);
 
         Ok(self.status)
@@ -138,10 +136,10 @@ impl<'a> Application<'a> {
         let case = &suite.cases()[case_index];
 
         match result {
-            QueryResult::Success => self.formatter.case_passed(suite, case),
+            QueryResult::Success => self.output.case_passed(suite, case),
             QueryResult::Fail { ref message } | QueryResult::Error { ref message } => {
                 self.status = ApplicationStatus::Fail;
-                self.formatter.case_failed(suite, case, message);
+                self.output.case_failed(suite, case, message);
             }
         }
 
@@ -159,11 +157,11 @@ impl<'a> Application<'a> {
         let case = &suite.cases()[case_index];
 
         match result {
-            QueryResult::Success => self.formatter.case_skipped(suite, case),
+            QueryResult::Success => self.output.case_skipped(suite, case),
             QueryResult::Fail { .. } => bus.send_case_run(suite_index, case_index, case)?,
             QueryResult::Error { ref message } => {
                 self.status = ApplicationStatus::Fail;
-                self.formatter.case_failed(suite, case, message);
+                self.output.case_failed(suite, case, message);
             }
         }
 
@@ -179,14 +177,14 @@ impl<'a> Application<'a> {
         let suite = &self.suites[suite_index];
 
         match result {
-            QueryResult::Success => self.formatter.suite_skipped(suite),
+            QueryResult::Success => self.output.suite_skipped(suite),
             QueryResult::Fail { .. } => {
-                self.formatter.suite_started(suite);
+                self.output.suite_started(suite);
                 bus.send_suite(suite_index, suite)?;
             }
             QueryResult::Error { ref message } => {
                 self.status = ApplicationStatus::Fail;
-                self.formatter.suite_error(suite, message)
+                self.output.suite_failed(suite, message)
             }
         }
 
