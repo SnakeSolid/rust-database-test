@@ -38,7 +38,7 @@ impl<'a> Application<'a> {
     pub fn new(config: &'a Configuration) -> Application<'a> {
         Application {
             config,
-            output: output::create_output(config.text_mode(), 0),
+            output: output::create_output(config),
             suites: Vec::default(),
             status: ApplicationStatus::Success,
         }

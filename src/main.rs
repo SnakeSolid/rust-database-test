@@ -19,6 +19,8 @@ mod validate;
 use application::Application;
 use application::ApplicationResult;
 use application::ApplicationStatus;
+use config::BEQUIET;
+use config::BEVERBOSE;
 use config::Configuration;
 use config::DATABASE;
 use config::EXTENSIONS;
@@ -120,6 +122,7 @@ fn start_app() -> ApplicationResult<ApplicationStatus> {
             Arg::with_name(EXTENSIONS)
                 .short("e")
                 .long("extensions")
+                .takes_value(true)
                 .multiple(true)
                 .value_name("EXTENSIONS")
                 .help("File extension filter for recursive search")
@@ -140,6 +143,24 @@ fn start_app() -> ApplicationResult<ApplicationStatus> {
                 .long("text-mode")
                 .help("Use plain text mode instead of color")
                 .display_order(10),
+        )
+        .arg(
+            Arg::with_name(BEVERBOSE)
+                .short("v")
+                .long("verbose")
+                .multiple(true)
+                .help("Be verbose, can be applied several times")
+                .conflicts_with(BEQUIET)
+                .display_order(11),
+        )
+        .arg(
+            Arg::with_name(BEQUIET)
+                .short("q")
+                .long("quiet")
+                .multiple(true)
+                .help("Be quiet, can be applied several times")
+                .conflicts_with(BEVERBOSE)
+                .display_order(12),
         )
         .arg(
             Arg::with_name(SUITES)

@@ -17,7 +17,11 @@ pub const RECURSIVE: &str = "RECURSIVE";
 pub const EXTENSIONS: &str = "EXTENSIONS";
 pub const FILTER: &str = "FILTER";
 pub const TEXTMODE: &str = "TEXTMODE";
+pub const BEVERBOSE: &str = "BEVERBOSE";
+pub const BEQUIET: &str = "BEQUIET";
 pub const SUITES: &str = "SUITES";
+
+const DEFAULT_VERBOSITY: isize = 4;
 
 #[derive(Debug)]
 pub struct Configuration {
@@ -31,6 +35,7 @@ pub struct Configuration {
     extensions: Option<Vec<String>>,
     filter: Option<String>,
     text_mode: bool,
+    verbosity: isize,
     suites: Vec<PathBuf>,
 }
 
@@ -69,6 +74,8 @@ impl Configuration {
                 .map(|values| values.map(|value| value.into()).collect()),
             filter: matches.value_of(FILTER).map(|value| value.into()),
             text_mode: matches.is_present(TEXTMODE),
+            verbosity: DEFAULT_VERBOSITY + matches.occurrences_of(BEVERBOSE) as isize
+                - matches.occurrences_of(BEQUIET) as isize,
             suites: matches
                 .values_of(SUITES)
                 .ok_or(ConfigurationError::EmptySuites)?
@@ -115,6 +122,10 @@ impl Configuration {
 
     pub fn text_mode(&self) -> bool {
         self.text_mode
+    }
+
+    pub fn verbosity(&self) -> isize {
+        self.verbosity
     }
 
     pub fn suites(&self) -> &Vec<PathBuf> {
