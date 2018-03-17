@@ -3,6 +3,12 @@ name = "database-test"
 version = "0.1.0"
 authors = ["Anton Shabanov <snakesolid@ngs.ru>"]
 
+[profile.dev]
+codegen-units = 3
+
+[profile.release]
+lto = true
+
 [dependencies]
 postgres = "0.15"
 serde = "1.0"
