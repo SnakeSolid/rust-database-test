@@ -36,18 +36,16 @@ pub struct Application<'a> {
 }
 
 impl<'a> Application<'a> {
-    pub fn new(config: &'a Configuration) -> Application<'a> {
-        Application {
+    pub fn new(config: &'a Configuration) -> ApplicationResult<Application<'a>> {
+        Ok(Application {
             config,
             output: output::create_output(config),
-            suites: Vec::default(),
+            suites: SuiteReader::new(config).read()?,
             status: ApplicationStatus::Success,
-        }
+        })
     }
 
     pub fn run(mut self) -> ApplicationResult<ApplicationStatus> {
-        self.read_suites()?;
-
         let n_cases = self.get_n_cases();
         let (message_sender, message_receiver) = sync_channel(n_cases);
         let (reply_sender, reply_receiver) = sync_channel(n_cases);
@@ -194,23 +192,5 @@ impl<'a> Application<'a> {
 
     fn get_n_cases(&self) -> usize {
         self.suites.iter().map(|s| s.cases().len()).sum()
-    }
-
-    fn read_suites(&mut self) -> ApplicationResult<()> {
-        let mut reader = SuiteReader::default();
-        reader.read(
-            self.config.suites(),
-            self.config.filter(),
-            self.config.recursive(),
-            self.config.extensions(),
-        )?;
-
-        self.suites.extend(reader.suites());
-
-        if self.suites.is_empty() {
-            Err(ApplicationError::no_suites_found())
-        } else {
-            Ok(())
-        }
     }
 }

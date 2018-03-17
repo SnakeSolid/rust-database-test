@@ -177,7 +177,7 @@ fn start_app() -> ApplicationResult<ApplicationStatus> {
         Ok(config) => config,
         Err(err) => panic!("{}", err),
     };
-    let result = Application::new(&config).run();
+    let result = Application::new(&config).and_then(Application::run);
 
     if let Err(ref err) = result {
         println!("{}", err);

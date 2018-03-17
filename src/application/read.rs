@@ -1,29 +1,34 @@
 use std::fs::File;
 use std::fs;
 use std::path::Path;
-use std::path::PathBuf;
 
 use serde_yaml;
 
+use application::ApplicationError;
+use application::ApplicationResult;
+use config::Configuration;
 use dto::TestSuite;
 
-use super::error::ApplicationError;
-use super::error::ApplicationResult;
-
 #[derive(Debug)]
-pub struct SuiteReader {
+pub struct SuiteReader<'a> {
+    config: &'a Configuration,
     suites: Vec<TestSuite>,
 }
 
-impl SuiteReader {
-    pub fn read(
-        &mut self,
-        paths: &[PathBuf],
-        filter: Option<&String>,
-        recursive: bool,
-        extensions: Option<&Vec<String>>,
-    ) -> ApplicationResult<()> {
-        for path in paths {
+impl<'a> SuiteReader<'a> {
+    pub fn new(config: &'a Configuration) -> SuiteReader<'a> {
+        SuiteReader {
+            config,
+            suites: Vec::default(),
+        }
+    }
+
+    pub fn read(mut self) -> ApplicationResult<Vec<TestSuite>> {
+        let filter = self.config.filter();
+        let recursive = self.config.recursive();
+        let extensions = self.config.extensions();
+
+        for path in self.config.suites() {
             if path.is_file() {
                 let reader = File::open(path).map_err(ApplicationError::suite_io_error)?;
                 let suite =
@@ -39,7 +44,11 @@ impl SuiteReader {
             }
         }
 
-        Ok(())
+        if !self.suites.is_empty() {
+            Ok(self.suites)
+        } else {
+            Err(ApplicationError::no_suites_found())
+        }
     }
 
     fn read_recursively(
@@ -69,18 +78,6 @@ impl SuiteReader {
         }
 
         Ok(())
-    }
-
-    pub fn suites(self) -> Vec<TestSuite> {
-        self.suites
-    }
-}
-
-impl Default for SuiteReader {
-    fn default() -> SuiteReader {
-        SuiteReader {
-            suites: Vec::default(),
-        }
     }
 }
 
