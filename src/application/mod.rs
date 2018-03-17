@@ -22,6 +22,7 @@ pub use self::read::SuiteReader;
 pub use self::status::ApplicationStatus;
 
 use self::bus::MessageBus;
+use self::bus::MessageSender;
 use self::worker::QueryResult;
 use self::worker::Worker;
 use self::worker::WorkerMessage;
@@ -50,7 +51,7 @@ impl<'a> Application<'a> {
         let n_cases = self.get_n_cases();
         let (message_sender, message_receiver) = sync_channel(n_cases);
         let (reply_sender, reply_receiver) = sync_channel(n_cases);
-        let bus = MessageBus::new(message_sender, reply_receiver);
+        let mut bus = MessageBus::new(message_sender, reply_receiver);
         let workers = self.spawn_workers(message_receiver, reply_sender)?;
 
         self.output.header();
@@ -65,16 +66,16 @@ impl<'a> Application<'a> {
             }
         }
 
-        bus.message_loop(|bus, reply| match reply {
+        bus.message_loop(|sender, reply| match reply {
             WorkerReply::SuiteSkip {
                 suite_index,
                 result,
-            } => self.on_suite_skip(bus, suite_index, result),
+            } => self.on_suite_skip(sender, suite_index, result),
             WorkerReply::CaseSkip {
                 suite_index,
                 case_index,
                 result,
-            } => self.on_case_skip(bus, suite_index, case_index, result),
+            } => self.on_case_skip(sender, suite_index, case_index, result),
             WorkerReply::CaseRun {
                 suite_index,
                 case_index,
@@ -148,7 +149,7 @@ impl<'a> Application<'a> {
 
     fn on_case_skip(
         &mut self,
-        bus: &MessageBus,
+        sender: &mut MessageSender,
         suite_index: usize,
         case_index: usize,
         result: QueryResult,
@@ -158,7 +159,7 @@ impl<'a> Application<'a> {
 
         match result {
             QueryResult::Success => self.output.case_skipped(suite, case),
-            QueryResult::Fail { .. } => bus.send_case_run(suite_index, case_index, case)?,
+            QueryResult::Fail { .. } => sender.send_case_run(suite_index, case_index, case)?,
             QueryResult::Error { ref message } => {
                 self.status = ApplicationStatus::Fail;
                 self.output.case_failed(suite, case, message);
@@ -170,7 +171,7 @@ impl<'a> Application<'a> {
 
     fn on_suite_skip(
         &mut self,
-        bus: &MessageBus,
+        sender: &mut MessageSender,
         suite_index: usize,
         result: QueryResult,
     ) -> ApplicationResult<()> {
@@ -180,7 +181,7 @@ impl<'a> Application<'a> {
             QueryResult::Success => self.output.suite_skipped(suite),
             QueryResult::Fail { .. } => {
                 self.output.suite_started(suite);
-                bus.send_suite(suite_index, suite)?;
+                sender.send_suite(suite_index, suite)?;
             }
             QueryResult::Error { ref message } => {
                 self.status = ApplicationStatus::Fail;
