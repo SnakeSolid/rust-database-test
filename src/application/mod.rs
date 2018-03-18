@@ -10,7 +10,6 @@ use dto::TestSuite;
 
 mod bus;
 mod error;
-mod filter;
 mod output;
 mod read;
 mod status;
@@ -18,8 +17,6 @@ mod worker;
 
 pub use self::error::ApplicationError;
 pub use self::error::ApplicationResult;
-pub use self::filter::create_filter;
-pub use self::filter::Filter;
 pub use self::output::Output;
 pub use self::read::SuiteReader;
 pub use self::status::ApplicationStatus;

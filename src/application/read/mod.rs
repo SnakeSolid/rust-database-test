@@ -6,10 +6,12 @@ use serde_yaml;
 
 use application::ApplicationError;
 use application::ApplicationResult;
-use application::Filter;
-use application;
 use config::Configuration;
 use dto::TestSuite;
+
+mod filter;
+
+use self::filter::Filter;
 
 #[derive(Debug)]
 pub struct SuiteReader<'a> {
@@ -22,7 +24,7 @@ impl<'a> SuiteReader<'a> {
     pub fn new(config: &'a Configuration) -> SuiteReader<'a> {
         SuiteReader {
             config,
-            filter: application::create_filter(config),
+            filter: filter::create_filter(config),
             suites: Vec::default(),
         }
     }
