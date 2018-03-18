@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 mod color;
 mod counter;
 mod plain;
@@ -11,7 +13,7 @@ pub use self::plain::PlainFormatter;
 
 use self::counter::TestCounters;
 
-pub trait Formatter {
+pub trait Formatter: Debug {
     fn header(&self);
     fn footer(&self, passed: usize, skipped: usize, failed: usize);
     fn suite_started(&mut self, suite_name: &str);
@@ -22,7 +24,7 @@ pub trait Formatter {
     fn case_skipped(&mut self, suite_name: &str, case_name: &str);
 }
 
-pub trait Output {
+pub trait Output: Debug {
     fn header(&self);
     fn footer(&self);
     fn suite_started(&mut self, suite: &TestSuite);

@@ -45,13 +45,15 @@ impl MessageBus {
     where
         F: FnMut(&mut MessageSender, WorkerReply) -> ApplicationResult<()>,
     {
-        for reply in &self.reply_receiver {
-            callback(&mut self.message_sender, reply)?;
+        if self.message_sender.has_messages() {
+            for reply in &self.reply_receiver {
+                callback(&mut self.message_sender, reply)?;
 
-            self.message_sender.dec_messages();
+                self.message_sender.dec_messages();
 
-            if self.message_sender.has_messages() {
-                break;
+                if !self.message_sender.has_messages() {
+                    break;
+                }
             }
         }
 

@@ -83,6 +83,6 @@ impl MessageSender {
     }
 
     pub fn has_messages(&self) -> bool {
-        self.n_messages == 0
+        self.n_messages > 0
     }
 }

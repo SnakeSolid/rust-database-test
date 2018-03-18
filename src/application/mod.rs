@@ -10,6 +10,7 @@ use dto::TestSuite;
 
 mod bus;
 mod error;
+mod filter;
 mod output;
 mod read;
 mod status;
@@ -17,6 +18,8 @@ mod worker;
 
 pub use self::error::ApplicationError;
 pub use self::error::ApplicationResult;
+pub use self::filter::create_filter;
+pub use self::filter::Filter;
 pub use self::output::Output;
 pub use self::read::SuiteReader;
 pub use self::status::ApplicationStatus;
@@ -28,6 +31,7 @@ use self::worker::Worker;
 use self::worker::WorkerMessage;
 use self::worker::WorkerReply;
 
+#[derive(Debug)]
 pub struct Application<'a> {
     config: &'a Configuration,
     output: Box<Output>,
@@ -49,20 +53,11 @@ impl<'a> Application<'a> {
         let n_cases = self.get_n_cases();
         let (message_sender, message_receiver) = sync_channel(n_cases);
         let (reply_sender, reply_receiver) = sync_channel(n_cases);
-        let mut bus = MessageBus::new(message_sender, reply_receiver);
         let workers = self.spawn_workers(message_receiver, reply_sender)?;
+        let mut bus = MessageBus::new(message_sender, reply_receiver);
 
         self.output.header();
-
-        for (suite_index, suite) in self.suites.iter().enumerate() {
-            if let Some(skip) = suite.skip() {
-                bus.send_suite_skip(suite_index, skip)?;
-            } else {
-                self.output.suite_started(suite);
-
-                bus.send_suite(suite_index, suite)?;
-            }
-        }
+        self.send_start_suites(&mut bus)?;
 
         bus.message_loop(|sender, reply| match reply {
             WorkerReply::SuiteSkip {
@@ -85,6 +80,20 @@ impl<'a> Application<'a> {
         self.join_workers(workers);
 
         Ok(self.status)
+    }
+
+    fn send_start_suites(&mut self, bus: &mut MessageBus) -> ApplicationResult<()> {
+        for (suite_index, suite) in self.suites.iter().enumerate() {
+            if let Some(skip) = suite.skip() {
+                bus.send_suite_skip(suite_index, skip)?;
+            } else {
+                self.output.suite_started(suite);
+
+                bus.send_suite(suite_index, suite)?;
+            }
+        }
+
+        Ok(())
     }
 
     fn join_workers(&self, workers: Vec<JoinHandle<()>>) {
