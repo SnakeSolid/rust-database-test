@@ -23,7 +23,7 @@ Optional arguments:
 * `-d` (`--database`) DATABASE: PostgreSQL database;
 * `-r` (`--recursive`): Read all files under each directory, recursively;
 * `-e` (`--extensions`) EXTENSIONS: File extension filters for recursive search;
-* `-f` (`--filter`) FILTER: Filter test suite by suite name;
+* `-f` (`--filter`) FILTER: Filter test suite by suite name (comma-separated sequence of strings);
 * `-t` (`--text-mode`): Use plain text mode instead of color;
 * `-n` (`--n-workers`) NWORKERS: Number of worker threads, default value - 4;
 * `-v` (`--verbose`): Be verbose, can be applied two times;
@@ -34,6 +34,8 @@ Also all possible arguments can be shown with `--help` option.
 Extension filters used only for recursive directory processing. If parameter is file, it will be processed regardless its extension.
 
 By default shown only failed and passed test, and test results. See [Verbosity](#markdown-header-verbosity) section for details.
+
+Suite filtering use substring matching. If suite name contains any string from sequence - suite will be executed, otherwise suite will be ignored.
 
 ## Exit code
 
